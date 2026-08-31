@@ -15,6 +15,7 @@ import {
   Activity,
   ArrowRight,
 } from "lucide-react";
+import { playRetroSound } from "@/lib/rpg/audio";
 
 interface SoundTrack {
   id: string;
@@ -78,249 +79,222 @@ const SOUND_TRACKS: SoundTrack[] = [
     description_fr: "Souffle holodiastolique doux, humé, régressif le long du bord gauche du sternum, débutant dès B2.",
     reference: "[Coustet] p.64",
   },
-  {
-    id: "frottement",
-    nom: "Frottement Péricardique (Péricardite Aiguë)",
-    type: "Bruit Péricardique",
-    bpm: 88,
-    foyer_optimal: "tricuspide",
-    foyer_optimal_nom: "Bord Sternal Gauche / Xiphoïde",
-    description_fr: "Bruit superficiel râpeux de « cuir neuf », systolo-diastolique à 3 composantes, persistant en apnée.",
-    reference: "[UNESS-Cardio] p.18",
-  },
 ];
 
 export default function HeartSoundSimulator() {
-  const [selectedTrackIndex, setSelectedTrackIndex] = useState(0);
-  const [activeFoyer, setActiveFoyer] = useState<string>("mitral");
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [selectedFoyer, setSelectedFoyer] = useState<string>("mitral");
   const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(0.85);
-
+  const [volume, setVolume] = useState(0.8);
   const [isQuizMode, setIsQuizMode] = useState(false);
-  const [quizSecretIndex, setQuizSecretIndex] = useState(0);
-  const [quizGuess, setQuizGuess] = useState<string | null>(null);
-  const [quizEvaluated, setQuizEvaluated] = useState(false);
+  const [quizSecretIndex, setQuizSecretIndex] = useState<number | null>(null);
+  const [quizAnswer, setQuizAnswer] = useState<string | null>(null);
+  const [isQuizSubmitted, setIsQuizSubmitted] = useState(false);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
-  const loopTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<any>(null);
 
-  const currentTrack = isQuizMode ? SOUND_TRACKS[quizSecretIndex] : SOUND_TRACKS[selectedTrackIndex];
+  const currentTrack = SOUND_TRACKS[isQuizMode && quizSecretIndex !== null ? quizSecretIndex : currentTrackIndex];
 
-  useEffect(() => {
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-    if (AudioCtx) audioCtxRef.current = new AudioCtx();
-    return () => {
-      if (audioCtxRef.current) audioCtxRef.current.close();
-    };
-  }, []);
-
-  const playCardiacCycle = (track: SoundTrack) => {
-    if (!audioCtxRef.current || !isPlaying) return;
-    const ctx = audioCtxRef.current;
-    if (ctx.state === "suspended") ctx.resume();
-
-    const t = ctx.currentTime;
-
-    // B1
-    const oscB1 = ctx.createOscillator();
-    const gainB1 = ctx.createGain();
-    oscB1.type = "sine";
-    oscB1.frequency.setValueAtTime(100, t);
-    oscB1.frequency.exponentialRampToValueAtTime(70, t + 0.08);
-
-    gainB1.gain.setValueAtTime(0.001, t);
-    gainB1.gain.exponentialRampToValueAtTime(volume * 0.95, t + 0.015);
-    gainB1.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
-
-    oscB1.connect(gainB1);
-    gainB1.connect(ctx.destination);
-    oscB1.start(t);
-    oscB1.stop(t + 0.1);
-
-    // RA
-    if (track.id === "ra") {
-      const bufferSize = ctx.sampleRate * 0.22;
-      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const output = noiseBuffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
-      const noise = ctx.createBufferSource();
-      noise.buffer = noiseBuffer;
-      const filter = ctx.createBiquadFilter();
-      filter.type = "bandpass";
-      filter.frequency.value = 350;
-      filter.Q.value = 1.8;
-      const noiseGain = ctx.createGain();
-      noiseGain.gain.setValueAtTime(0.001, t + 0.05);
-      noiseGain.gain.linearRampToValueAtTime(volume * 0.7, t + 0.15);
-      noiseGain.gain.linearRampToValueAtTime(0.001, t + 0.26);
-      noise.connect(filter);
-      filter.connect(noiseGain);
-      noiseGain.connect(ctx.destination);
-      noise.start(t + 0.05);
-    }
-
-    // IM
-    if (track.id === "im") {
-      const bufferSize = ctx.sampleRate * 0.26;
-      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const output = noiseBuffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
-      const noise = ctx.createBufferSource();
-      noise.buffer = noiseBuffer;
-      const filter = ctx.createBiquadFilter();
-      filter.type = "bandpass";
-      filter.frequency.value = 650;
-      filter.Q.value = 1.2;
-      const noiseGain = ctx.createGain();
-      noiseGain.gain.setValueAtTime(0.001, t + 0.03);
-      noiseGain.gain.linearRampToValueAtTime(volume * 0.6, t + 0.06);
-      noiseGain.gain.setValueAtTime(volume * 0.6, t + 0.24);
-      noiseGain.gain.linearRampToValueAtTime(0.001, t + 0.28);
-      noise.connect(filter);
-      filter.connect(noiseGain);
-      noiseGain.connect(ctx.destination);
-      noise.start(t + 0.03);
-    }
-
-    // B2
-    const tB2 = t + 0.28;
-    const oscB2 = ctx.createOscillator();
-    const gainB2 = ctx.createGain();
-    oscB2.type = "sine";
-    oscB2.frequency.setValueAtTime(150, tB2);
-    oscB2.frequency.exponentialRampToValueAtTime(110, tB2 + 0.06);
-    gainB2.gain.setValueAtTime(0.001, tB2);
-    gainB2.gain.exponentialRampToValueAtTime(volume * 0.85, tB2 + 0.012);
-    gainB2.gain.exponentialRampToValueAtTime(0.001, tB2 + 0.07);
-    oscB2.connect(gainB2);
-    gainB2.connect(ctx.destination);
-    oscB2.start(tB2);
-    oscB2.stop(tB2 + 0.08);
-
-    // B3 Galop
-    if (track.id === "galop") {
-      const tB3 = t + 0.42;
-      const oscB3 = ctx.createOscillator();
-      const gainB3 = ctx.createGain();
-      oscB3.type = "sine";
-      oscB3.frequency.setValueAtTime(65, tB3);
-      gainB3.gain.setValueAtTime(0.001, tB3);
-      gainB3.gain.exponentialRampToValueAtTime(volume * 0.6, tB3 + 0.015);
-      gainB3.gain.exponentialRampToValueAtTime(0.001, tB3 + 0.08);
-      oscB3.connect(gainB3);
-      gainB3.connect(ctx.destination);
-      oscB3.start(tB3);
-      oscB3.stop(tB3 + 0.09);
-    }
-
-    // IA
-    if (track.id === "ia") {
-      const bufferSize = ctx.sampleRate * 0.35;
-      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const output = noiseBuffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
-      const noise = ctx.createBufferSource();
-      noise.buffer = noiseBuffer;
-      const filter = ctx.createBiquadFilter();
-      filter.type = "highpass";
-      filter.frequency.value = 500;
-      const noiseGain = ctx.createGain();
-      noiseGain.gain.setValueAtTime(volume * 0.5, tB2 + 0.02);
-      noiseGain.gain.exponentialRampToValueAtTime(0.001, tB2 + 0.36);
-      noise.connect(filter);
-      filter.connect(noiseGain);
-      noiseGain.connect(ctx.destination);
-      noise.start(tB2 + 0.02);
-    }
-
-    // Frottement
-    if (track.id === "frottement") {
-      const bufferSize = ctx.sampleRate * 0.55;
-      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const output = noiseBuffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) output[i] = (Math.random() * 2 - 1) * (i % 200 > 100 ? 1 : 0.3);
-      const noise = ctx.createBufferSource();
-      noise.buffer = noiseBuffer;
-      const filter = ctx.createBiquadFilter();
-      filter.type = "bandpass";
-      filter.frequency.value = 400;
-      filter.Q.value = 2.0;
-      const noiseGain = ctx.createGain();
-      noiseGain.gain.setValueAtTime(0.001, t);
-      noiseGain.gain.linearRampToValueAtTime(volume * 0.4, t + 0.1);
-      noiseGain.gain.linearRampToValueAtTime(0.001, t + 0.55);
-      noise.connect(filter);
-      filter.connect(noiseGain);
-      noiseGain.connect(ctx.destination);
-      noise.start(t);
+  const getAudioContext = () => {
+    if (typeof window === "undefined") return null;
+    try {
+      if (!audioCtxRef.current) {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) {
+          audioCtxRef.current = new AudioCtx();
+        }
+      }
+      if (audioCtxRef.current && audioCtxRef.current.state === "suspended") {
+        audioCtxRef.current.resume().catch(() => {});
+      }
+      return audioCtxRef.current;
+    } catch {
+      return null;
     }
   };
 
+  const playCycleSound = () => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      const attenuation = selectedFoyer === currentTrack.foyer_optimal ? 1 : 0.45;
+      const gainFactor = volume * attenuation;
+
+      // 1. BRUIT B1
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = "sine";
+      osc1.frequency.setValueAtTime(65, now);
+      osc1.frequency.exponentialRampToValueAtTime(30, now + 0.08);
+      gain1.gain.setValueAtTime(0.35 * gainFactor, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.1);
+
+      // 2. SOUFFLES SYSTOLIQUES
+      if (currentTrack.id === "ra" || currentTrack.id === "im") {
+        const dur = currentTrack.id === "ra" ? 0.22 : 0.28;
+        const bufferSize = ctx.sampleRate * dur;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = currentTrack.id === "ra" ? "bandpass" : "lowpass";
+        filter.frequency.value = currentTrack.id === "ra" ? 350 : 500;
+        filter.Q.value = currentTrack.id === "ra" ? 2.5 : 1;
+
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.01, now + 0.05);
+        if (currentTrack.id === "ra") {
+          noiseGain.gain.linearRampToValueAtTime(0.25 * gainFactor, now + 0.14);
+          noiseGain.gain.linearRampToValueAtTime(0.001, now + 0.28);
+        } else {
+          noiseGain.gain.setValueAtTime(0.18 * gainFactor, now + 0.05);
+          noiseGain.gain.linearRampToValueAtTime(0.001, now + 0.32);
+        }
+
+        noise.connect(filter);
+        filter.connect(noiseGain);
+        noiseGain.connect(ctx.destination);
+
+        noise.start(now + 0.05);
+        noise.stop(now + 0.34);
+      }
+
+      // 3. BRUIT B2
+      const tB2 = now + 0.32;
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = "sine";
+      osc2.frequency.setValueAtTime(110, tB2);
+      osc2.frequency.exponentialRampToValueAtTime(45, tB2 + 0.05);
+      gain2.gain.setValueAtTime(0.25 * gainFactor, tB2);
+      gain2.gain.exponentialRampToValueAtTime(0.001, tB2 + 0.06);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(tB2);
+      osc2.stop(tB2 + 0.07);
+
+      // 4. BRUIT B3
+      if (currentTrack.id === "galop") {
+        const tB3 = tB2 + 0.14;
+        const osc3 = ctx.createOscillator();
+        const gain3 = ctx.createGain();
+        osc3.type = "sine";
+        osc3.frequency.setValueAtTime(40, tB3);
+        osc3.frequency.exponentialRampToValueAtTime(25, tB3 + 0.06);
+        gain3.gain.setValueAtTime(0.25 * gainFactor, tB3);
+        gain3.gain.exponentialRampToValueAtTime(0.001, tB3 + 0.07);
+        osc3.connect(gain3);
+        gain3.connect(ctx.destination);
+        osc3.start(tB3);
+        osc3.stop(tB3 + 0.08);
+      }
+
+      // 5. SOUFFLE DIASTOLIQUE
+      if (currentTrack.id === "ia") {
+        const dur = 0.35;
+        const bufferSize = ctx.sampleRate * dur;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = "bandpass";
+        filter.frequency.value = 600;
+        filter.Q.value = 1.2;
+
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.18 * gainFactor, tB2 + 0.02);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, tB2 + 0.35);
+
+        noise.connect(filter);
+        filter.connect(noiseGain);
+        noiseGain.connect(ctx.destination);
+
+        noise.start(tB2 + 0.02);
+        noise.stop(tB2 + 0.36);
+      }
+    } catch {}
+  };
+
   useEffect(() => {
-    if (!isPlaying) {
-      if (loopTimerRef.current) clearInterval(loopTimerRef.current);
-      return;
+    if (isPlaying) {
+      const intervalMs = (60 / currentTrack.bpm) * 1000;
+      playCycleSound();
+      timerRef.current = setInterval(() => {
+        playCycleSound();
+      }, intervalMs);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
     }
-    const intervalMs = (60 / currentTrack.bpm) * 1000;
-    playCardiacCycle(currentTrack);
-    loopTimerRef.current = setInterval(() => playCardiacCycle(currentTrack), intervalMs);
     return () => {
-      if (loopTimerRef.current) clearInterval(loopTimerRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isPlaying, currentTrack, volume]);
+  }, [isPlaying, currentTrack, selectedFoyer, volume]);
 
   const togglePlay = () => {
-    if (!isPlaying && audioCtxRef.current && audioCtxRef.current.state === "suspended") {
-      audioCtxRef.current.resume();
-    }
+    getAudioContext();
     setIsPlaying(!isPlaying);
+    playRetroSound("click");
   };
 
   const startQuiz = () => {
-    const rand = Math.floor(Math.random() * SOUND_TRACKS.length);
-    setQuizSecretIndex(rand);
-    setQuizGuess(null);
-    setQuizEvaluated(false);
+    const r = Math.floor(Math.random() * SOUND_TRACKS.length);
+    setQuizSecretIndex(r);
     setIsQuizMode(true);
+    setQuizAnswer(null);
+    setIsQuizSubmitted(false);
     setIsPlaying(true);
+    playRetroSound("click");
   };
 
-  const handleQuizAnswer = (trackId: string) => {
-    setQuizGuess(trackId);
-    setQuizEvaluated(true);
-    if (trackId === currentTrack.id) {
-      confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+  const handleQuizSubmit = (trackId: string) => {
+    setQuizAnswer(trackId);
+    setIsQuizSubmitted(true);
+    if (trackId === SOUND_TRACKS[quizSecretIndex!].id) {
+      playRetroSound("victory");
+      confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+    } else {
+      playRetroSound("wrong");
     }
   };
 
   const foyers = [
-    { id: "aortique", label: "Aortique", code: "A", sub: "2e Droit", color: "#f43f5e" },
-    { id: "pulmonaire", label: "Pulmonaire", code: "P", sub: "2e Gauche", color: "#3b82f6" },
-    { id: "tricuspide", label: "Tricuspide", code: "T", sub: "Xiphoïde", color: "#eab308" },
+    { id: "aortique", label: "Aortique", code: "A", sub: "2e EIC D", color: "#f43f5e" },
+    { id: "pulmonaire", label: "Pulmonaire", code: "P", sub: "2e EIC G", color: "#38bdf8" },
+    { id: "tricuspide", label: "Tricuspide", code: "T", sub: "Xiphoïde", color: "#f59e0b" },
     { id: "mitral", label: "Mitral", code: "M", sub: "Apex 5e", color: "#10b981" },
   ];
 
   return (
-    <div style={{ maxWidth: "860px", margin: "0 auto" }} className="space-y-4">
-      {/* 1. CARTOON EN-TÊTE AVEC BOUTON DÉFI 3D */}
-      <div
-        style={{
-          background: "linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%)",
-          border: "3px solid #cbd5e1",
-          borderRadius: "24px",
-          padding: "14px 18px",
-          boxShadow: "0 4px 0 #94a3b8",
-        }}
-        className="flex flex-wrap items-center justify-between gap-3"
-      >
+    <div className="space-y-4 max-w-4xl mx-auto">
+      {/* 1. EN-TÊTE AVEC BOUTON DÉFI */}
+      <div className="card-rpg flex flex-wrap items-center justify-between gap-3 p-4">
         <div className="flex items-center gap-3">
-          <span style={{ fontSize: "28px" }}>🎧</span>
+          <span className="text-2xl">🎧</span>
           <div>
-            <h2 style={{ fontSize: "15px", fontWeight: "900", color: "#1e1b4b" }}>
+            <h2 className="text-base font-black text-white">
               Stéthoscope Virtuel Interactif
             </h2>
-            <p style={{ fontSize: "11px", color: "#64748b", fontWeight: "700" }}>
-              Écoute les vrais souffles cardiaques au stéthoscope
+            <p className="text-xs text-slate-400 font-medium">
+              Synthèse acoustique Web Audio des vrais bruits et souffles cardiaques
             </p>
           </div>
         </div>
@@ -334,78 +308,34 @@ export default function HeartSoundSimulator() {
               startQuiz();
             }
           }}
-          style={{
-            background: isQuizMode
-              ? "linear-gradient(180deg, #1e293b 0%, #0f172a 100%)"
-              : "linear-gradient(180deg, #f59e0b 0%, #d97706 100%)",
-            color: "#ffffff",
-            border: "3px solid",
-            borderColor: isQuizMode ? "#020617" : "#b45309",
-            borderRadius: "16px",
-            padding: "8px 14px",
-            fontWeight: "900",
-            fontSize: "12px",
-            boxShadow: isQuizMode ? "0 3px 0 #020617" : "0 3px 0 #78350f",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-          }}
-          className="active:translate-y-1 active:shadow-none transition-all"
+          className={`px-4 py-2.5 rounded-2xl font-black text-xs transition-all flex items-center gap-2 border ${
+            isQuizMode
+              ? "bg-slate-900 text-slate-200 border-slate-700 hover:bg-slate-800"
+              : "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 border-amber-300 shadow-md shadow-amber-500/20"
+          }`}
         >
-          <Trophy className="w-4 h-4 text-amber-200" />
+          <Trophy className="w-4 h-4 text-amber-950" />
           <span>{isQuizMode ? "Quitter le défi" : "🎯 Mode Défi Aveugle"}</span>
         </button>
       </div>
 
-      {/* 2. SCÈNE D'AUSCULTATION (CARTOON PATIENT + DR. PULSE) */}
-      <div
-        style={{
-          background: "linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%)",
-          border: "3px solid #cbd5e1",
-          borderRadius: "28px",
-          padding: "20px",
-          boxShadow: "0 6px 0 #94a3b8",
-        }}
-      >
+      {/* 2. SCÈNE D'AUSCULTATION */}
+      <div className="card-rpg space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
           {/* A. LECTEUR D'ONDE & DR. PULSE */}
-          <div
-            style={{
-              background: "linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)",
-              border: "3px solid #312e81",
-              borderRadius: "24px",
-              padding: "16px",
-              boxShadow: "0 4px 0 #1e1b4b",
-              color: "#ffffff",
-            }}
-            className="md:col-span-5 flex flex-col justify-between space-y-4"
-          >
+          <div className="md:col-span-5 bg-slate-950 border border-slate-800 rounded-3xl p-5 flex flex-col justify-between space-y-4 shadow-inner">
             <div>
-              <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-indigo-400">
+              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-indigo-400">
                 <span>{isQuizMode ? "Patient Mystère" : currentTrack.type}</span>
                 <span>❤️ {currentTrack.bpm} bpm</span>
               </div>
-              <h3 style={{ fontSize: "16px", fontWeight: "900" }} className="mt-1 line-clamp-2">
+              <h3 className="text-base font-black text-white mt-1 line-clamp-2">
                 {isQuizMode ? "Écoutez attentivement..." : currentTrack.nom}
               </h3>
             </div>
 
             {/* Onde sonore animée */}
-            <div
-              style={{
-                height: "60px",
-                background: "#020617",
-                border: "2px solid #334155",
-                borderRadius: "16px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "4px",
-                padding: "0 10px",
-                overflow: "hidden",
-              }}
-            >
+            <div className="h-14 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-center gap-1 px-3 overflow-hidden">
               {isPlaying ? (
                 Array.from({ length: 20 }).map((_, i) => (
                   <div
@@ -415,183 +345,160 @@ export default function HeartSoundSimulator() {
                       background: "linear-gradient(180deg, #38bdf8 0%, #ec4899 100%)",
                       borderRadius: "4px",
                       height: `${Math.max(15, (Math.sin(i * 0.6) * 0.5 + 0.5) * 100)}%`,
+                      transition: "height 0.2s ease",
                     }}
-                    className="animate-pulse"
                   />
                 ))
               ) : (
-                <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "700" }}>
-                  ⏸️ Stéthoscope en pause
+                <span className="text-xs font-bold text-slate-500 flex items-center gap-1.5">
+                  <span>⏸️ Stéthoscope en pause</span>
                 </span>
               )}
             </div>
 
-            {/* Bouton Play/Stop 3D Duolingo */}
+            {/* Bouton Play/Stop */}
             <button
               onClick={togglePlay}
-              style={{
-                width: "100%",
-                background: isPlaying
-                  ? "linear-gradient(180deg, #e11d48 0%, #be123c 100%)"
-                  : "linear-gradient(180deg, #6366f1 0%, #4f46e5 100%)",
-                border: "3px solid",
-                borderColor: isPlaying ? "#881337" : "#3730a3",
-                borderRadius: "18px",
-                padding: "12px",
-                color: "#ffffff",
-                fontWeight: "900",
-                fontSize: "13px",
-                boxShadow: isPlaying ? "0 4px 0 #4c0519" : "0 4px 0 #312e81",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-              }}
-              className="active:translate-y-1 active:shadow-none transition-all"
+              className={`w-full py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg ${
+                isPlaying
+                  ? "bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white shadow-rose-600/30"
+                  : "btn-rpg-indigo"
+              }`}
             >
               {isPlaying ? <Square className="w-4 h-4 fill-white" /> : <Play className="w-4 h-4 fill-white" />}
-              <span>{isPlaying ? "Arrêter l'auscultation" : "Démarrer l'auscultation"}</span>
+              <span>{isPlaying ? "Couper l'écoute" : "Poser le stéthoscope"}</span>
             </button>
           </div>
 
-          {/* B. SÉLECTION DES FOYERS & BIBLIOTHÈQUE / DÉFI */}
+          {/* B. SÉLECTEUR DE FOYER ANATOMIQUE */}
           <div className="md:col-span-7 space-y-3">
-            {/* Les 4 Foyers APTM Cartoon */}
-            <div className="space-y-1">
-              <div style={{ fontSize: "11px", fontWeight: "900", color: "#475569", textTransform: "uppercase" }}>
-                Repères d&apos;auscultation (APTM) :
-              </div>
-              <div className="grid grid-cols-4 gap-1.5">
-                {foyers.map((f) => (
-                  <button
-                    key={f.id}
-                    onClick={() => setActiveFoyer(f.id)}
-                    style={{
-                      background: activeFoyer === f.id ? "#eef2ff" : "#ffffff",
-                      border: "2px solid",
-                      borderColor: activeFoyer === f.id ? f.color : "#cbd5e1",
-                      borderRadius: "14px",
-                      padding: "6px 4px",
-                      textAlign: "center",
-                      boxShadow: activeFoyer === f.id ? `0 2px 0 ${f.color}` : "0 2px 0 #cbd5e1",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div style={{ fontWeight: "900", fontSize: "12px", color: f.color }}>{f.code}</div>
-                    <div style={{ fontSize: "9px", color: "#64748b", fontWeight: "700" }}>{f.sub}</div>
-                  </button>
-                ))}
-              </div>
+            <div className="text-[10px] font-black text-amber-400 uppercase tracking-wider">
+              Position du Stéthoscope (Foyer d&apos;Écoute) :
             </div>
 
-            {/* Mode Libre : Liste des souffles */}
-            {!isQuizMode ? (
-              <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                {SOUND_TRACKS.map((t, idx) => (
+            <div className="grid grid-cols-2 gap-2.5">
+              {foyers.map((f) => {
+                const isSelected = selectedFoyer === f.id;
+                const isOptimal = f.id === currentTrack.foyer_optimal;
+                return (
+                  <button
+                    key={f.id}
+                    onClick={() => {
+                      getAudioContext();
+                      setSelectedFoyer(f.id);
+                      playRetroSound("click");
+                    }}
+                    className={`p-3 rounded-2xl border-2 text-left transition-all flex items-center gap-3 ${
+                      isSelected
+                        ? "border-amber-400 bg-slate-900 shadow-md shadow-amber-500/10 scale-[1.01]"
+                        : "border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-700"
+                    }`}
+                  >
+                    <span
+                      className="w-8 h-8 rounded-xl font-black text-xs text-white flex items-center justify-center shrink-0 shadow-xs"
+                      style={{ background: f.color }}
+                    >
+                      {f.code}
+                    </span>
+                    <div>
+                      <div className="font-black text-xs text-white">{f.label}</div>
+                      <div className="text-[10px] text-slate-400 font-medium">
+                        {f.sub} {!isQuizMode && isOptimal && "⭐ Optimal"}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* 3. LISTE DES BRUITS CARDIAQUES (EN MODE LIBRE) */}
+        {!isQuizMode && (
+          <div className="space-y-2 pt-2 border-t border-slate-800">
+            <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+              Bibliothèque des Signes Acoustiques :
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {SOUND_TRACKS.map((t, idx) => (
+                <button
+                  key={t.id}
+                  onClick={() => {
+                    getAudioContext();
+                    setCurrentTrackIndex(idx);
+                    setSelectedFoyer(t.foyer_optimal);
+                    setIsPlaying(true);
+                    playRetroSound("click");
+                  }}
+                  className={`p-3 rounded-2xl border text-left transition-all ${
+                    currentTrackIndex === idx
+                      ? "border-amber-400 bg-slate-900 text-white font-bold"
+                      : "border-slate-800 bg-slate-950/70 text-slate-300 hover:border-slate-700"
+                  }`}
+                >
+                  <div className="font-black text-xs flex items-center justify-between">
+                    <span>{t.nom}</span>
+                    <span className="text-[10px] text-amber-400 font-mono">{t.bpm} bpm</span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 line-clamp-1 mt-0.5 font-normal">
+                    {t.description_fr}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 4. MODE DÉFI AVEUGLE */}
+        {isQuizMode && (
+          <div className="space-y-3 pt-2 border-t border-slate-800">
+            <div className="text-xs font-black text-amber-400 uppercase tracking-wider">
+              Quel diagnostic acoustique reconnais-tu ?
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {SOUND_TRACKS.map((t) => {
+                const isSelected = quizAnswer === t.id;
+                const isCorrect = isQuizSubmitted && t.id === SOUND_TRACKS[quizSecretIndex!].id;
+                const isWrong = isQuizSubmitted && isSelected && !isCorrect;
+
+                return (
                   <button
                     key={t.id}
-                    onClick={() => {
-                      setSelectedTrackIndex(idx);
-                      setIsPlaying(true);
-                    }}
-                    style={{
-                      width: "100%",
-                      textAlign: "left",
-                      background: selectedTrackIndex === idx ? "#e0e7ff" : "#ffffff",
-                      border: "2px solid",
-                      borderColor: selectedTrackIndex === idx ? "#4f46e5" : "#e2e8f0",
-                      borderRadius: "14px",
-                      padding: "8px 12px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      cursor: "pointer",
-                    }}
+                    disabled={isQuizSubmitted}
+                    onClick={() => handleQuizSubmit(t.id)}
+                    className={`p-3.5 rounded-2xl border-2 text-left transition-all flex items-center justify-between ${
+                      isCorrect
+                        ? "border-emerald-500 bg-emerald-950/60 text-emerald-300 font-black"
+                        : isWrong
+                        ? "border-rose-500 bg-rose-950/60 text-rose-300"
+                        : "border-slate-800 bg-slate-950 text-slate-200 hover:border-slate-700"
+                    }`}
                   >
-                    <div>
-                      <div style={{ fontSize: "12px", fontWeight: "800", color: "#1e1b4b" }}>{t.nom}</div>
-                      <div style={{ fontSize: "10px", color: "#64748b" }}>📍 {t.foyer_optimal_nom}</div>
-                    </div>
-                    {selectedTrackIndex === idx && isPlaying && (
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                    )}
+                    <span className="text-xs font-bold">{t.nom}</span>
+                    {isCorrect && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
+                    {isWrong && <XCircle className="w-4 h-4 text-rose-400 shrink-0" />}
                   </button>
-                ))}
-              </div>
-            ) : (
-              /* Mode Défi Aveugle */
-              <div className="space-y-2">
-                <div style={{ fontSize: "12px", fontWeight: "900", color: "#0f172a" }}>
-                  Quel est le diagnostic auscultatoire ?
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {SOUND_TRACKS.map((t) => {
-                    const isSelected = quizGuess === t.id;
-                    const isCorrect = t.id === currentTrack.id;
-                    return (
-                      <button
-                        key={t.id}
-                        disabled={quizEvaluated}
-                        onClick={() => handleQuizAnswer(t.id)}
-                        style={{
-                          background:
-                            quizEvaluated && isCorrect
-                              ? "#ecfdf5"
-                              : isSelected && !isCorrect
-                              ? "#fff1f2"
-                              : "#ffffff",
-                          border: "2px solid",
-                          borderColor:
-                            quizEvaluated && isCorrect
-                              ? "#10b981"
-                              : isSelected && !isCorrect
-                              ? "#f43f5e"
-                              : "#cbd5e1",
-                          borderRadius: "14px",
-                          padding: "8px 10px",
-                          fontSize: "11px",
-                          fontWeight: "800",
-                          color:
-                            quizEvaluated && isCorrect
-                              ? "#065f46"
-                              : isSelected && !isCorrect
-                              ? "#881337"
-                              : "#1e293b",
-                          textAlign: "left",
-                          cursor: quizEvaluated ? "default" : "pointer",
-                        }}
-                      >
-                        {t.nom.split("(")[0]}
-                      </button>
-                    );
-                  })}
-                </div>
+                );
+              })}
+            </div>
 
-                {quizEvaluated && (
-                  <button
-                    onClick={startQuiz}
-                    style={{
-                      width: "100%",
-                      background: "#4f46e5",
-                      border: "3px solid #3730a3",
-                      borderRadius: "14px",
-                      padding: "8px",
-                      color: "#ffffff",
-                      fontWeight: "900",
-                      fontSize: "12px",
-                      boxShadow: "0 3px 0 #312e81",
-                      cursor: "pointer",
-                      marginTop: "6px",
-                    }}
-                  >
-                    Patient suivant ➔
-                  </button>
-                )}
+            {isQuizSubmitted && (
+              <div className="space-y-3 pt-2">
+                <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs text-slate-200 leading-relaxed font-medium">
+                  💡 <strong className="text-amber-400">Explication clinique</strong> : {SOUND_TRACKS[quizSecretIndex!].description_fr}
+                </div>
+                <button
+                  onClick={startQuiz}
+                  className="btn-rpg-gold w-full py-3.5 text-xs font-black uppercase tracking-wider"
+                >
+                  <span>Passer au patient mystère suivant</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
               </div>
             )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

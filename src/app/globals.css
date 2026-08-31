@@ -4,10 +4,27 @@
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply bg-slate-950 text-slate-100 antialiased;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+    background-color: #0b0f19;
+  }
+
+  /* Scrollbar rétro 16-bit personnalisée */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #090d16;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
   }
 }
 
@@ -29,4 +46,54 @@
 
 .animate-pulse-ring {
   animation: pulse-ring 2s infinite ease-in-out;
+}
+
+/* Animations de sprites pixel-art stables (base 32px sans scintillement) */
+@keyframes sprite-anim-4 {
+  from { background-position: 0px 0px; }
+  to { background-position: -128px 0px; }
+}
+
+@keyframes sprite-anim-6 {
+  from { background-position: 0px 0px; }
+  to { background-position: -192px 0px; }
+}
+
+.pixel-rendering {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.sprite-idle-4 {
+  animation: sprite-anim-4 0.8s steps(4) infinite;
+}
+
+.sprite-run-6 {
+  animation: sprite-anim-6 0.6s steps(6) infinite;
+}
+
+.sprite-bonfire {
+  animation: sprite-anim-4 0.6s steps(4) infinite;
+}
+
+/* Composants de style RPG Rétro Modernes */
+.card-rpg {
+  @apply bg-slate-900/90 border border-slate-800 rounded-3xl p-5 md:p-6 shadow-xl backdrop-blur-sm;
+}
+
+.card-rpg-interactive {
+  @apply bg-slate-900/80 border border-slate-800 hover:border-amber-400/60 rounded-2xl p-4 transition-all hover:bg-slate-800/80 shadow-md;
+}
+
+.btn-rpg-gold {
+  @apply bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black rounded-2xl shadow-lg shadow-amber-500/25 transition-all transform active:scale-95 flex items-center justify-center gap-2;
+}
+
+.btn-rpg-indigo {
+  @apply bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-black rounded-2xl shadow-lg shadow-indigo-600/25 transition-all transform active:scale-95 flex items-center justify-center gap-2;
+}
+
+.badge-rune {
+  @apply inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-xl border;
 }

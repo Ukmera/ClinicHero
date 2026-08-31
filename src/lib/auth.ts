@@ -64,6 +64,12 @@ export async function getCurrentUser() {
         user_level: true,
         streak_days: true,
         last_activity_date: true,
+        character_class: true,
+        avatar_id: true,
+        current_title: true,
+        unlocked_titles_json: true,
+        inventory_json: true,
+        mana_points: true,
         created_at: true,
       },
     });

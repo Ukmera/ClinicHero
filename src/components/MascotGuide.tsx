@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { Sparkles, HeartPulse, ShieldAlert, Lightbulb } from "lucide-react";
+import PixelSprite, { SpriteCharacterType } from "@/components/rpg/PixelSprite";
+import { Sparkles, ShieldAlert, Lightbulb, Brain } from "lucide-react";
 
 interface MascotGuideProps {
   message: string;
@@ -18,72 +19,64 @@ export default function MascotGuide({
     switch (type) {
       case "alert":
         return {
-          badge: "Attention Drapeau Rouge",
-          badgeColor: "bg-rose-100 text-rose-800 border-rose-200",
-          bubbleBg: "bg-rose-50/80 border-rose-200 text-rose-950",
-          iconColor: "text-rose-600",
-          avatarEmoji: "🚨",
-          avatarBg: "bg-rose-500",
+          badge: "Rune d'Alerte • Drapeau Rouge",
+          badgeColor: "bg-rose-950/80 text-rose-300 border-rose-700/80",
+          bubbleBg: "bg-rose-950/30 border-rose-800/60 text-rose-100",
+          spriteType: "skeleton_mage" as SpriteCharacterType,
+          icon: ShieldAlert,
         };
       case "encouraging":
         return {
-          badge: "Conseil du Dr. Pulse",
-          badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-200",
-          bubbleBg: "bg-emerald-50/80 border-emerald-200 text-emerald-950",
-          iconColor: "text-emerald-600",
-          avatarEmoji: "🩺",
-          avatarBg: "bg-emerald-600",
+          badge: "Conseil de l'Archimage",
+          badgeColor: "bg-emerald-950/80 text-emerald-300 border-emerald-700/80",
+          bubbleBg: "bg-emerald-950/30 border-emerald-800/60 text-emerald-100",
+          spriteType: "knight" as SpriteCharacterType,
+          icon: Sparkles,
         };
       case "thinking":
         return {
-          badge: "Réflexion Clinique",
-          badgeColor: "bg-purple-100 text-purple-800 border-purple-200",
-          bubbleBg: "bg-purple-50/80 border-purple-200 text-purple-950",
-          iconColor: "text-purple-600",
-          avatarEmoji: "🤔",
-          avatarBg: "bg-purple-600",
+          badge: "Méditation Sémiologique",
+          badgeColor: "bg-indigo-950/80 text-indigo-300 border-indigo-700/80",
+          bubbleBg: "bg-indigo-950/30 border-indigo-800/60 text-indigo-100",
+          spriteType: "wizzard" as SpriteCharacterType,
+          icon: Brain,
         };
       default:
         return {
-          badge: "Astuce Mnémotechnique",
-          badgeColor: "bg-amber-100 text-amber-800 border-amber-200",
-          bubbleBg: "bg-amber-50/80 border-amber-200 text-amber-950",
-          iconColor: "text-amber-600",
-          avatarEmoji: "💡",
-          avatarBg: "bg-amber-500",
+          badge: "Incantation Mnémotechnique",
+          badgeColor: "bg-amber-950/80 text-amber-300 border-amber-700/80",
+          bubbleBg: "bg-amber-950/30 border-amber-800/60 text-amber-100",
+          spriteType: "wizzard" as SpriteCharacterType,
+          icon: Lightbulb,
         };
     }
   };
 
   const config = getConfig();
+  const Icon = config.icon;
 
   return (
     <div className="flex items-start gap-3 my-4 animate-bounce-short">
-      {/* Avatar Mascotte "Dr. Pulse" */}
-      <div className="relative shrink-0">
-        <div
-          className={`w-12 h-12 rounded-2xl ${config.avatarBg} text-white flex items-center justify-center text-2xl shadow-md transform hover:scale-105 transition-transform`}
-        >
-          {config.avatarEmoji}
-        </div>
-        <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white border border-slate-200 flex items-center justify-center text-[10px] font-extrabold text-slate-700 shadow-2xs">
-          +
-        </div>
-      </div>
+      {/* Sprite Pixel Crawler */}
+      <PixelSprite
+        type={config.spriteType}
+        size="md"
+        glow={true}
+        className="shrink-0"
+      />
 
-      {/* Bulle de dialogue interactive */}
-      <div
-        className={`flex-1 rounded-2xl border p-4 shadow-xs relative ${config.bubbleBg}`}
-      >
+      {/* Bulle de dialogue interactive façon Grimoire RPG */}
+      <div className={`flex-1 rounded-2xl border p-4 shadow-lg relative ${config.bubbleBg}`}>
         <div className="flex items-center justify-between gap-2 mb-1.5">
           <div className="flex items-center gap-1.5">
             <span
-              className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${config.badgeColor} uppercase tracking-wider`}
+              className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${config.badgeColor} uppercase tracking-wider flex items-center gap-1`}
             >
-              {title || config.badge}
+              <Icon className="w-3 h-3" />
+              <span>{title || config.badge}</span>
             </span>
           </div>
-          <span className="text-[10px] font-bold text-slate-400">Dr. Pulse</span>
+          <span className="text-[10px] font-extrabold text-amber-400">Dr. Pulse</span>
         </div>
 
         <p className="text-xs md:text-sm leading-relaxed font-medium">

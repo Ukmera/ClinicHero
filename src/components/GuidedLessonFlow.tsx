@@ -11,11 +11,13 @@ import {
   Play,
   RotateCcw,
   BookOpen,
+  Swords,
 } from "lucide-react";
 import MascotGuide from "./MascotGuide";
 import MindmapViewer from "./MindmapViewer";
 import InteractiveChestDiagram from "./InteractiveChestDiagram";
 import MarkdownViewer from "./MarkdownViewer";
+import { playRetroSound } from "@/lib/rpg/audio";
 
 interface GuidedLessonFlowProps {
   lesson: any;
@@ -23,8 +25,6 @@ interface GuidedLessonFlowProps {
 
 export default function GuidedLessonFlow({ lesson }: GuidedLessonFlowProps) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [microAnswer, setMicroAnswer] = useState<string | null>(null);
-  const [isMicroSubmitted, setIsMicroSubmitted] = useState(false);
 
   // Parsing de la carte mentale
   let mindmapData: any = null;
@@ -36,27 +36,30 @@ export default function GuidedLessonFlow({ lesson }: GuidedLessonFlowProps) {
     }
   }
 
-  // Définition des paliers interactifs selon la leçon
   const isAuscultationLesson = lesson.slug.includes("auscultation");
-
   const totalSteps = 4;
 
+  const handleNextStep = (stepNum: number) => {
+    setCurrentStep(stepNum);
+    playRetroSound("click");
+  };
+
   return (
-    <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm space-y-6 animate-bounce-short">
+    <div className="card-rpg space-y-6 animate-bounce-short">
       {/* Barre de progression du cours guidé */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs font-bold text-slate-500">
-          <span className="flex items-center gap-1.5 text-indigo-600">
-            <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
+        <div className="flex items-center justify-between text-xs font-black">
+          <span className="flex items-center gap-1.5 text-amber-400 uppercase tracking-wider">
+            <Sparkles className="w-4 h-4 fill-amber-400" />
             Parcours Guidé Interactif
           </span>
-          <span>
+          <span className="text-amber-400 bg-amber-500/15 border border-amber-400/30 px-2.5 py-0.5 rounded-full">
             Étape {currentStep + 1} / {totalSteps}
           </span>
         </div>
-        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+        <div className="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-800 p-0.5">
           <div
-            className="bg-gradient-to-r from-indigo-500 to-rose-500 h-full rounded-full transition-all duration-300"
+            className="bg-gradient-to-r from-amber-400 via-rose-500 to-indigo-600 h-full rounded-full transition-all duration-300 shadow-md shadow-amber-500/20"
             style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
           />
         </div>
@@ -67,25 +70,25 @@ export default function GuidedLessonFlow({ lesson }: GuidedLessonFlowProps) {
         <div className="space-y-4">
           <MascotGuide
             type="encouraging"
-            title="Objectif de la Leçon"
-            message={`Bienvenue ! Aujourd'hui nous explorons : "${lesson.nom_fr}". Nous allons décomposer les signes essentiels palier par palier.`}
+            title="Objectif de la Quête"
+            message={`Bienvenue ! Aujourd'hui nous explorons : "${lesson.nom_fr}". Décomposons les réflexes sémiologiques essentiels palier par palier.`}
           />
 
-          <div className="bg-indigo-50/70 border border-indigo-200/70 rounded-2xl p-4 text-xs md:text-sm text-indigo-950 font-medium leading-relaxed">
+          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs md:text-sm text-slate-200 font-medium leading-relaxed shadow-sm">
             {lesson.cours_intro_fr || lesson.description_fr}
           </div>
 
           {lesson.mnemonique && (
             <MascotGuide
               type="tip"
-              title="Moyen Mnémotechnique"
-              message={`Retiens bien ce raccourci pour toute ta carrière : ${lesson.mnemonique}`}
+              title="Incantation Mnémotechnique"
+              message={`Retiens bien ce raccourci pour toute ta pratique clinique : ${lesson.mnemonique}`}
             />
           )}
 
           <button
-            onClick={() => setCurrentStep(1)}
-            className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl shadow-md flex items-center justify-center gap-2 text-sm mt-4 transition-all"
+            onClick={() => handleNextStep(1)}
+            className="btn-rpg-gold w-full py-4 text-xs font-black uppercase tracking-wider mt-4"
           >
             <span>Découvrir le schéma clinique</span>
             <ArrowRight className="w-4 h-4" />
@@ -100,11 +103,13 @@ export default function GuidedLessonFlow({ lesson }: GuidedLessonFlowProps) {
             <InteractiveChestDiagram mode="auscultation" />
           ) : (
             <div className="space-y-3">
-              <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-indigo-600" />
+              <h3 className="font-black text-sm text-white flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-amber-400" />
                 <span>Points Clés et Démarche Sémiologique</span>
               </h3>
-              <MarkdownViewer content={lesson.cours_points_cles_fr || lesson.cours_detaille_fr || ""} />
+              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4">
+                <MarkdownViewer content={lesson.cours_points_cles_fr || lesson.cours_detaille_fr || ""} />
+              </div>
             </div>
           )}
 
@@ -116,16 +121,16 @@ export default function GuidedLessonFlow({ lesson }: GuidedLessonFlowProps) {
 
           <div className="flex gap-2 pt-2">
             <button
-              onClick={() => setCurrentStep(0)}
-              className="py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs"
+              onClick={() => handleNextStep(0)}
+              className="py-3 px-4 rounded-xl border border-slate-800 bg-slate-950 hover:bg-slate-800 text-slate-300 font-bold text-xs"
             >
               Précédent
             </button>
             <button
-              onClick={() => setCurrentStep(2)}
-              className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md flex items-center justify-center gap-2 text-xs"
+              onClick={() => handleNextStep(2)}
+              className="btn-rpg-gold flex-1 py-3 text-xs font-black uppercase tracking-wider"
             >
-              <span>Vérifier ma compréhension</span>
+              <span>Vérifier les Pièges</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -141,20 +146,20 @@ export default function GuidedLessonFlow({ lesson }: GuidedLessonFlowProps) {
             message="Certains signes imposent une prise en charge immédiate. Voici les pièges et diagnostics différentiels majeurs :"
           />
 
-          <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 text-xs md:text-sm text-rose-950 font-medium leading-relaxed">
+          <div className="bg-rose-950/30 border border-rose-900/60 rounded-2xl p-4 text-rose-100 font-medium leading-relaxed">
             <MarkdownViewer content={lesson.pieges_cliniques_fr || "Ne jamais négliger l'atypie chez le patient diabétique ou âgé."} />
           </div>
 
           <div className="flex gap-2 pt-2">
             <button
-              onClick={() => setCurrentStep(1)}
-              className="py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs"
+              onClick={() => handleNextStep(1)}
+              className="py-3 px-4 rounded-xl border border-slate-800 bg-slate-950 hover:bg-slate-800 text-slate-300 font-bold text-xs"
             >
               Précédent
             </button>
             <button
-              onClick={() => setCurrentStep(3)}
-              className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md flex items-center justify-center gap-2 text-xs"
+              onClick={() => handleNextStep(3)}
+              className="btn-rpg-gold flex-1 py-3 text-xs font-black uppercase tracking-wider"
             >
               <span>Voir l&apos;arbre de décision</span>
               <ArrowRight className="w-4 h-4" />
@@ -163,36 +168,37 @@ export default function GuidedLessonFlow({ lesson }: GuidedLessonFlowProps) {
         </div>
       )}
 
-      {/* ÉTAPE 3 : Arbre Décisionnel & Passage à l'Évaluation */}
+      {/* ÉTAPE 3 : Arbre Décisionnel & Passage au Combat */}
       {currentStep === 3 && (
         <div className="space-y-5">
           {mindmapData ? (
             <div className="space-y-2">
-              <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
-                <Brain className="w-4 h-4 text-purple-600" />
+              <h3 className="font-black text-sm text-white flex items-center gap-2">
+                <Brain className="w-4 h-4 text-purple-400" />
                 <span>Synthèse : Arbre Décisionnel</span>
               </h3>
               <MindmapViewer data={mindmapData} />
             </div>
           ) : (
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs text-slate-700 leading-relaxed font-medium">
+            <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs text-slate-300 leading-relaxed font-medium">
               <MarkdownViewer content={lesson.cours_points_cles_fr || lesson.description_fr} />
             </div>
           )}
 
           <MascotGuide
             type="encouraging"
-            title="Prêt pour le défi !"
-            message="Tu as parcouru tous les concepts fondamentaux de cette leçon. Lance maintenant l'entraînement pour remporter tes XP et consolider ta mémoire !"
+            title="Prêt pour le combat !"
+            message="Tu as parcouru tous les concepts fondamentaux de cette leçon. Lance maintenant le combat sémiologique pour remporter tes XP !"
           />
 
           <div className="pt-2">
             <Link
               href={`/session/${lesson.id}`}
-              className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold rounded-2xl shadow-lg shadow-emerald-600/25 transition-all transform active:scale-95 flex items-center justify-center gap-2 text-base"
+              onClick={() => playRetroSound("click")}
+              className="btn-rpg-gold w-full py-4 text-sm font-black shadow-amber-500/25 uppercase tracking-wider"
             >
-              <Play className="w-5 h-5 fill-white" />
-              <span>Démarrer l&apos;entraînement (+{lesson.xp_reward} XP)</span>
+              <Swords className="w-5 h-5" />
+              <span>Démarrer le Combat (+{lesson.xp_reward} XP)</span>
             </Link>
           </div>
         </div>

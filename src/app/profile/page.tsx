@@ -13,9 +13,11 @@ import {
   Sparkles,
   Settings,
   GraduationCap,
+  Scroll,
 } from "lucide-react";
 import { getXpForNextLevel, getXpForCurrentLevel } from "@/lib/gamification";
 import ProfileSettingsClient from "./ProfileSettingsClient";
+import PixelSprite from "@/components/rpg/PixelSprite";
 
 export default async function ProfilePage() {
   const user = await getCurrentUser();
@@ -87,101 +89,106 @@ export default async function ProfilePage() {
   ];
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       {/* Profil Header avec Client Settings Modal */}
       <ProfileSettingsClient user={user} />
 
       {/* Barre de progression vers le prochain niveau */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs space-y-3">
-        <div className="flex items-center justify-between text-xs font-bold">
-          <span className="text-slate-700 flex items-center gap-1.5">
-            <Zap className="w-4 h-4 text-indigo-600" />
+      <div className="card-rpg space-y-3">
+        <div className="flex items-center justify-between text-xs font-black">
+          <span className="text-amber-400 flex items-center gap-1.5 uppercase tracking-wider">
+            <Zap className="w-4 h-4 fill-amber-400" />
             Progression Niveau {user.user_level}
           </span>
-          <span className="text-indigo-600">
+          <span className="text-amber-400">
             {user.xp_total} / {nextLevelXp} XP
           </span>
         </div>
-        <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+        <div className="w-full bg-slate-950 h-3.5 rounded-full overflow-hidden border border-slate-800 p-0.5 shadow-inner">
           <div
-            className="bg-indigo-600 h-full rounded-full transition-all duration-500"
+            className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 h-full rounded-full transition-all duration-500 shadow-md shadow-amber-500/20"
             style={{ width: `${levelProgressPercent}%` }}
           />
         </div>
-        <p className="text-[11px] text-slate-500">
+        <p className="text-[11px] text-slate-400">
           Encore {Math.max(0, nextLevelXp - user.xp_total)} XP pour atteindre le Niveau {user.user_level + 1}.
         </p>
       </div>
 
-      {/* Cartes de statistiques */}
+      {/* Cartes de statistiques RPG */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-amber-50/70 border border-amber-200/60 rounded-2xl p-3.5 text-center">
-          <Flame className="w-5 h-5 text-amber-500 fill-amber-500 mx-auto mb-1" />
-          <div className="text-xl font-extrabold text-amber-950">{user.streak_days}</div>
-          <div className="text-[10px] font-bold text-amber-700 uppercase">Jours de série</div>
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-center shadow-md">
+          <div className="flex justify-center mb-1">
+            <PixelSprite type="bonfire" size="xs" glow={false} className="bg-transparent border-0" />
+          </div>
+          <div className="text-xl font-black text-amber-400">{user.streak_days}</div>
+          <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Jours de série</div>
         </div>
 
-        <div className="bg-indigo-50/70 border border-indigo-200/60 rounded-2xl p-3.5 text-center">
-          <Zap className="w-5 h-5 text-indigo-500 fill-indigo-500 mx-auto mb-1" />
-          <div className="text-xl font-extrabold text-indigo-950">{user.xp_total}</div>
-          <div className="text-[10px] font-bold text-indigo-700 uppercase">XP Totaux</div>
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-center shadow-md">
+          <Zap className="w-5 h-5 text-indigo-400 fill-indigo-400 mx-auto mb-1" />
+          <div className="text-xl font-black text-indigo-300">{user.xp_total}</div>
+          <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">XP Cumulés</div>
         </div>
 
-        <div className="bg-emerald-50/70 border border-emerald-200/60 rounded-2xl p-3.5 text-center">
-          <Trophy className="w-5 h-5 text-emerald-500 mx-auto mb-1" />
-          <div className="text-xl font-extrabold text-emerald-950">{cardProgress.length}</div>
-          <div className="text-[10px] font-bold text-emerald-700 uppercase">Cartes mémorisées</div>
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-center shadow-md">
+          <Trophy className="w-5 h-5 text-emerald-400 mx-auto mb-1" />
+          <div className="text-xl font-black text-emerald-300">{cardProgress.length}</div>
+          <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Cartes Maîtrisées</div>
         </div>
 
-        <div className="bg-purple-50/70 border border-purple-200/60 rounded-2xl p-3.5 text-center">
-          <Sparkles className="w-5 h-5 text-purple-500 mx-auto mb-1" />
-          <div className="text-xl font-extrabold text-purple-950">{goldSkillsCount}</div>
-          <div className="text-[10px] font-bold text-purple-700 uppercase">Leçons dorées</div>
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-center shadow-md">
+          <Sparkles className="w-5 h-5 text-purple-400 mx-auto mb-1" />
+          <div className="text-xl font-black text-purple-300">{goldSkillsCount}</div>
+          <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Quêtes Dorées</div>
         </div>
       </div>
 
-      {/* Glossaire Médical Découvert */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-4">
-        <div className="flex items-center justify-between">
+      {/* Grimoire Sémiologique Cardiovasculaire */}
+      <div className="card-rpg space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-indigo-600" />
-            <h2 className="text-base font-extrabold text-slate-900">
-              Glossaire Sémiologique Cardiovasculaire ({glossaryTerms.length} termes)
+            <Scroll className="w-5 h-5 text-amber-400" />
+            <h2 className="text-base font-black text-white">
+              Grimoire des Arcanes Médicales ({glossaryTerms.length} termes)
             </h2>
           </div>
         </div>
 
-        <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto pr-2">
+        <div className="divide-y divide-slate-800/80 max-h-72 overflow-y-auto pr-2 space-y-1">
           {glossaryTerms.map((g) => (
-            <div key={g.id} className="py-2.5 space-y-0.5">
-              <div className="font-bold text-xs text-indigo-950">{g.terme}</div>
-              <div className="text-[11px] text-slate-600">{g.definition_fr}</div>
+            <div key={g.id} className="py-3 space-y-1">
+              <div className="font-black text-xs text-amber-300 flex items-center gap-2">
+                <span>✦</span>
+                <span>{g.terme}</span>
+              </div>
+              <div className="text-[11px] text-slate-300 leading-relaxed pl-4.5">{g.definition_fr}</div>
             </div>
           ))}
         </div>
       </div>
 
       {/* Bibliographie & Sources Médicales */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-4">
-        <div className="flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-indigo-600" />
-          <h2 className="text-base font-extrabold text-slate-900">
-            Sources & Ouvrages Médicaux Référencés
+      <div className="card-rpg space-y-4">
+        <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+          <BookOpen className="w-5 h-5 text-indigo-400" />
+          <h2 className="text-base font-black text-white">
+            Traités & Ouvrages Médicaux Référencés
           </h2>
         </div>
 
-        <p className="text-xs text-slate-600 leading-relaxed">
-          Toutes les questions, définitions et feedbacks de ClinicHero sont vérifiés et adossés aux traités de référence :
+        <p className="text-xs text-slate-400 leading-relaxed">
+          Toutes les questions, définitions et règles sémiologiques de ClinicHero sont sourcées et adossées aux traités fondamentaux :
         </p>
 
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-slate-800/80">
           {medicalSources.map((src, i) => (
             <div key={i} className="py-3 space-y-1">
-              <div className="font-bold text-sm text-slate-900">{src.title}</div>
-              <div className="text-xs text-indigo-600 font-medium">
+              <div className="font-extrabold text-sm text-white">{src.title}</div>
+              <div className="text-xs text-amber-400 font-bold">
                 {src.author} • {src.edition}
               </div>
-              <div className="text-[11px] text-slate-500 leading-tight">{src.role}</div>
+              <div className="text-[11px] text-slate-400 leading-tight">{src.role}</div>
             </div>
           ))}
         </div>

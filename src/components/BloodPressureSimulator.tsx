@@ -12,7 +12,9 @@ import {
   ArrowRight,
   Heart,
   CheckCircle2,
+  Stethoscope,
 } from "lucide-react";
+import { playRetroSound } from "@/lib/rpg/audio";
 
 interface PatientScenario {
   id: string;
@@ -101,102 +103,119 @@ export default function BloodPressureSimulator() {
         }
       }
       if (audioCtxRef.current && audioCtxRef.current.state === "suspended") {
-        audioCtxRef.current.resume();
+        audioCtxRef.current.resume().catch(() => {});
       }
       return audioCtxRef.current;
-    } catch (e) {
-      console.warn("Audio Context init error:", e);
+    } catch {
       return null;
     }
   };
 
-  // Génération sonore Korotkoff
-  const playKorotkoffSound = (currentP: number) => {
+  // Son de Korotkoff
+  const playKorotkoffSound = () => {
     if (!audioEnabled) return;
     const ctx = getAudioContext();
     if (!ctx) return;
 
-    if (currentP > scenario.pas_cible || currentP < scenario.pad_cible) {
-      return;
-    }
-
     try {
+      const now = ctx.currentTime;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
-      const progressInWindow = (scenario.pas_cible - currentP) / (scenario.pas_cible - scenario.pad_cible);
-      const freq = 80 + progressInWindow * 25;
-
       osc.type = "sine";
-      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      osc.frequency.setValueAtTime(80, now);
+      osc.frequency.exponentialRampToValueAtTime(35, now + 0.09);
 
-      const volume = currentP > scenario.pad_cible + 8 ? 0.95 : 0.45;
-      gain.gain.setValueAtTime(0.001, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(volume, ctx.currentTime + 0.015);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
 
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.13);
-    } catch (e) {
-      console.warn("Audio playback error:", e);
-    }
+      osc.start(now);
+      osc.stop(now + 0.1);
+    } catch {}
   };
 
-  // Décompression continue
+  // Son de Gonflage
+  const playPumpSound = () => {
+    if (!audioEnabled) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(200, now);
+      osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.1);
+    } catch {}
+  };
+
+  // Décharge progressive
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
+    let timer: any;
     if (isValveOpen && pressure > 0) {
-      interval = setInterval(() => {
+      timer = setInterval(() => {
         setPressure((prev) => {
-          const next = Math.max(0, prev - 2.2);
-          if (next === 0) setIsValveOpen(false);
-          return Math.round(next * 10) / 10;
+          if (prev <= 1) {
+            setIsValveOpen(false);
+            return 0;
+          }
+          return Math.max(0, prev - 2.5);
         });
       }, 100);
     }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
+    return () => clearInterval(timer);
   }, [isValveOpen, pressure]);
 
-  // Battements périodiques
+  // Battements de Korotkoff
   useEffect(() => {
-    const beatIntervalMs = (60 / scenario.bpm) * 1000;
-    const beatTimer = setInterval(() => {
-      if (pressure > 0) {
-        playKorotkoffSound(pressure);
-      }
-    }, beatIntervalMs);
-
+    let beatTimer: any;
+    if (pressure > 0 && isValveOpen) {
+      const intervalMs = (60 / scenario.bpm) * 1000;
+      beatTimer = setInterval(() => {
+        if (pressure <= scenario.pas_cible && pressure >= scenario.pad_cible) {
+          playKorotkoffSound();
+        }
+      }, intervalMs);
+    }
     return () => clearInterval(beatTimer);
-  }, [pressure, scenario, audioEnabled]);
+  }, [pressure, isValveOpen, scenario, audioEnabled]);
 
   const handlePump = () => {
     getAudioContext();
+    playPumpSound();
     setIsPumping(true);
-    setTimeout(() => setIsPumping(false), 200);
-    setPressure((prev) => Math.min(280, Math.round(prev + 25)));
+    setTimeout(() => setIsPumping(false), 150);
+    setPressure((prev) => Math.min(280, prev + 25));
   };
 
   const handleReset = () => {
-    setPressure(0);
     setIsValveOpen(false);
+    setPressure(0);
     setMarkedPas(null);
     setMarkedPad(null);
     setIsEvaluated(false);
     setEvaluationResult(null);
+    playRetroSound("click");
   };
 
   const handleEvaluate = () => {
     if (markedPas === null || markedPad === null) return;
+
     const pasError = Math.abs(markedPas - scenario.pas_cible);
     const padError = Math.abs(markedPad - scenario.pad_cible);
-    const isPasExact = pasError <= 5;
-    const isPadExact = padError <= 5;
-    const isExcellent = isPasExact && isPadExact;
+
+    const isPasExact = pasError <= 10;
+    const isPadExact = padError <= 10;
+    const isExcellent = pasError <= 5 && padError <= 5;
 
     setEvaluationResult({
       isExcellent,
@@ -210,8 +229,11 @@ export default function BloodPressureSimulator() {
     });
     setIsEvaluated(true);
 
-    if (isExcellent && typeof confetti === "function") {
+    if (isExcellent) {
+      playRetroSound("victory");
       confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+    } else {
+      playRetroSound("correct");
     }
   };
 
@@ -220,24 +242,15 @@ export default function BloodPressureSimulator() {
   const cuffScale = 1 + (pressure / 280) * 0.28;
 
   return (
-    <div style={{ maxWidth: "860px", margin: "0 auto" }} className="space-y-4">
-      {/* 1. SÉLECTEUR DE PATIENT (STYLE CARTOON DUOLINGO) */}
-      <div
-        style={{
-          background: "linear-gradient(135deg, #eef2ff 0%, #ffffff 100%)",
-          border: "3px solid #cbd5e1",
-          borderRadius: "24px",
-          padding: "12px 18px",
-          boxShadow: "0 4px 0 #94a3b8",
-        }}
-        className="flex flex-wrap items-center justify-between gap-3"
-      >
-        <div className="flex items-center gap-2">
-          <span style={{ fontSize: "22px" }}>🏥</span>
-          <span style={{ fontWeight: "900", fontSize: "13px", color: "#1e1b4b" }}>
+    <div className="space-y-4 max-w-4xl mx-auto">
+      {/* 1. SÉLECTEUR DE PATIENT */}
+      <div className="card-rpg flex flex-wrap items-center justify-between gap-3 p-4">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span className="text-xl">🏥</span>
+          <span className="font-black text-xs text-amber-400 uppercase tracking-wider">
             Patient :
           </span>
-          <div className="flex gap-1.5">
+          <div className="flex flex-wrap gap-1.5">
             {SCENARIOS.map((s, idx) => (
               <button
                 key={s.id}
@@ -246,139 +259,70 @@ export default function BloodPressureSimulator() {
                   setScenarioIndex(idx);
                   handleReset();
                 }}
-                style={{
-                  background: scenarioIndex === idx ? "#4f46e5" : "#ffffff",
-                  color: scenarioIndex === idx ? "#ffffff" : "#334155",
-                  border: "2px solid",
-                  borderColor: scenarioIndex === idx ? "#3730a3" : "#cbd5e1",
-                  borderRadius: "14px",
-                  padding: "6px 12px",
-                  fontWeight: "800",
-                  fontSize: "12px",
-                  boxShadow: scenarioIndex === idx ? "0 3px 0 #312e81" : "0 2px 0 #cbd5e1",
-                  transform: scenarioIndex === idx ? "translateY(-1px)" : "none",
-                  cursor: "pointer",
-                }}
+                className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 border ${
+                  scenarioIndex === idx
+                    ? "bg-amber-400 text-slate-950 border-amber-300 shadow-md scale-105"
+                    : "bg-slate-950 text-slate-300 border-slate-800 hover:text-white"
+                }`}
               >
-                {s.avatar} {s.nom.split(" ")[0]}
+                <span>{s.avatar}</span>
+                <span>{s.nom.split(" ")[0]}</span>
               </button>
             ))}
           </div>
         </div>
 
-        <div style={{ fontSize: "12px", color: "#475569", fontWeight: "700" }}>
-          {scenario.avatar} <strong>{scenario.nom}</strong> ({scenario.age} ans) • ❤️ {scenario.bpm} bpm
+        <div className="text-xs text-slate-300 font-bold">
+          {scenario.avatar} <strong className="text-white">{scenario.nom}</strong> ({scenario.age} ans) • ❤️ {scenario.bpm} bpm
         </div>
       </div>
 
       {/* 2. SCÈNE CLINIQUE ANIMÉE (DR. PULSE + PATIENT + MANOMÈTRE) */}
-      <div
-        style={{
-          background: "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
-          border: "3px solid #cbd5e1",
-          borderRadius: "28px",
-          padding: "18px",
-          boxShadow: "0 6px 0 #94a3b8",
-        }}
-      >
+      <div className="card-rpg space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-          
           {/* A. LA SCÈNE DU PATIENT AVEC BRASSARD QUI GONFLE */}
-          <div
-            style={{
-              background: "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)",
-              border: "3px solid #7dd3fc",
-              borderRadius: "24px",
-              padding: "14px",
-              position: "relative",
-              overflow: "hidden",
-              boxShadow: "inset 0 2px 4px rgba(0,0,0,0.05)",
-            }}
-            className="md:col-span-6 flex flex-col items-center justify-center min-h-[250px]"
-          >
-            <div
-              style={{
-                position: "absolute",
-                top: "10px",
-                left: "14px",
-                fontSize: "10px",
-                fontWeight: "900",
-                color: "#0369a1",
-                textTransform: "uppercase",
-                letterSpacing: "1px",
-              }}
-            >
+          <div className="md:col-span-6 bg-slate-950 border border-slate-800 rounded-3xl p-5 relative overflow-hidden flex flex-col items-center justify-center min-h-[250px] shadow-inner">
+            <div className="absolute top-3 left-4 text-[10px] font-black text-amber-400 uppercase tracking-wider">
               Salle de consultation
             </div>
 
             {/* Personnages */}
-            <div className="relative flex items-center justify-center gap-6 my-2">
+            <div className="relative flex items-center justify-center gap-6 my-4">
               {/* Patient */}
               <div className="flex flex-col items-center">
-                <div style={{ fontSize: "58px", lineHeight: "1" }} className="animate-bounce-short">
+                <div className="text-5xl leading-none animate-bounce-short">
                   {scenario.avatar}
                 </div>
-                <span
-                  style={{
-                    background: "#ffffff",
-                    border: "2px solid #38bdf8",
-                    borderRadius: "10px",
-                    padding: "2px 8px",
-                    fontSize: "10px",
-                    fontWeight: "900",
-                    color: "#0369a1",
-                    marginTop: "4px",
-                  }}
-                >
+                <span className="bg-slate-900 border border-slate-700 text-slate-200 px-2.5 py-0.5 rounded-lg text-[10px] font-extrabold mt-1 shadow-xs">
                   {scenario.nom.split(" ")[0]}
                 </span>
               </div>
 
               {/* Brassard Gonflable */}
               <div className="flex flex-col items-center relative">
-                <div style={{ fontSize: "9px", fontWeight: "800", color: "#0284c7", marginBottom: "2px" }}>
+                <div className="text-[10px] font-black text-indigo-400 mb-1">
                   Brassard
                 </div>
 
                 <div
+                  className={`w-14 h-10 rounded-xl border-2 flex items-center justify-center transition-all ${
+                    isKorotkoffAudible
+                      ? "bg-rose-600 border-rose-400 shadow-rose-500/30"
+                      : "bg-indigo-600 border-indigo-400 shadow-indigo-500/30"
+                  } shadow-md`}
                   style={{
-                    width: "56px",
-                    height: "40px",
-                    background: isKorotkoffAudible ? "#ec4899" : "#4f46e5",
-                    border: "3px solid #1e1b4b",
-                    borderRadius: "12px",
-                    boxShadow: "0 4px 0 #1e1b4b",
                     transform: `scale(${cuffScale})`,
-                    transition: "transform 0.15s ease-out, background-color 0.2s",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
                   }}
                 >
-                  <span style={{ fontSize: "16px" }}>{pressure > 0 ? "💨" : "🩺"}</span>
+                  <span className="text-base">{pressure > 0 ? "💨" : "🩺"}</span>
                 </div>
 
                 {/* Stéthoscope */}
-                <div style={{ fontSize: "20px", marginTop: "-8px", zIndex: 10 }}>🎧</div>
+                <div className="text-xl -mt-2 z-10">🎧</div>
 
                 {/* Bulle Sonore */}
                 {isKorotkoffAudible && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "-24px",
-                      background: "#f43f5e",
-                      color: "#ffffff",
-                      fontWeight: "900",
-                      fontSize: "10px",
-                      padding: "2px 8px",
-                      borderRadius: "12px",
-                      border: "2px solid #881337",
-                      boxShadow: "0 2px 0 #881337",
-                      whiteSpace: "nowrap",
-                    }}
-                    className="animate-bounce"
-                  >
+                  <div className="absolute -top-7 bg-rose-600 text-white font-black text-[10px] px-2.5 py-0.5 rounded-full border border-rose-400 shadow-md animate-bounce whitespace-nowrap">
                     🎵 TOC ! TOC !
                   </div>
                 )}
@@ -387,48 +331,21 @@ export default function BloodPressureSimulator() {
               {/* Dr. Pulse */}
               <div className="flex flex-col items-center">
                 <div
-                  style={{
-                    fontSize: "48px",
-                    lineHeight: "1",
-                    transform: isPumping ? "scale(0.85) rotate(-8deg)" : "scale(1)",
-                    transition: "transform 0.1s",
-                  }}
+                  className={`text-4xl leading-none transition-transform ${
+                    isPumping ? "scale-90 rotate-[-8deg]" : "scale-100"
+                  }`}
                 >
                   ❤️
                 </div>
-                <span
-                  style={{
-                    background: "#ffffff",
-                    border: "2px solid #f43f5e",
-                    borderRadius: "10px",
-                    padding: "2px 8px",
-                    fontSize: "10px",
-                    fontWeight: "900",
-                    color: "#e11d48",
-                    marginTop: "4px",
-                  }}
-                >
+                <span className="bg-rose-950 border border-rose-700 text-rose-300 px-2.5 py-0.5 rounded-lg text-[10px] font-black mt-1 shadow-xs">
                   Dr. Pulse
                 </span>
               </div>
             </div>
 
             {/* Indicateur Sonore */}
-            <div
-              style={{
-                background: "#ffffff",
-                border: "2px solid #bae6fd",
-                borderRadius: "14px",
-                padding: "3px 10px",
-                fontSize: "10px",
-                fontWeight: "800",
-                color: isKorotkoffAudible ? "#e11d48" : "#0284c7",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              <span>
+            <div className="bg-slate-900 border border-slate-700 px-3.5 py-1.5 rounded-2xl text-[11px] font-extrabold flex items-center gap-2 shadow-xs">
+              <span className={isKorotkoffAudible ? "text-rose-400" : "text-slate-400"}>
                 {isKorotkoffAudible
                   ? "🔊 Bruits de Korotkoff perçus !"
                   : pressure > scenario.pas_cible
@@ -437,7 +354,7 @@ export default function BloodPressureSimulator() {
               </span>
               <button
                 onClick={() => setAudioEnabled(!audioEnabled)}
-                style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: "13px" }}
+                className="text-slate-400 hover:text-white transition-colors"
                 title="Activer/Couper le son"
               >
                 {audioEnabled ? "🔔" : "🔕"}
@@ -446,48 +363,13 @@ export default function BloodPressureSimulator() {
           </div>
 
           {/* B. LE MANOMÈTRE ANÉROÏDE */}
-          <div
-            style={{
-              background: "linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)",
-              border: "3px solid #312e81",
-              borderRadius: "24px",
-              padding: "14px",
-              boxShadow: "0 4px 0 #1e1b4b",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            className="md:col-span-6 text-white"
-          >
-            <div
-              style={{
-                fontSize: "10px",
-                fontWeight: "900",
-                letterSpacing: "1px",
-                color: "#a5b4fc",
-                textTransform: "uppercase",
-                marginBottom: "4px",
-              }}
-            >
+          <div className="md:col-span-6 bg-slate-950 border border-slate-800 rounded-3xl p-5 flex flex-col items-center justify-center shadow-inner">
+            <div className="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-2">
               Manomètre Anéroïde (mmHg)
             </div>
 
-            <div
-              style={{
-                position: "relative",
-                width: "175px",
-                height: "175px",
-                background: "#020617",
-                borderRadius: "50%",
-                border: "5px solid #6366f1",
-                boxShadow: "inset 0 0 15px rgba(0,0,0,0.8), 0 4px 0 #312e81",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <svg viewBox="0 0 200 200" style={{ width: "100%", height: "100%", position: "absolute" }}>
+            <div className="relative w-44 h-44 bg-slate-950 rounded-full border-4 border-indigo-500/80 shadow-2xl flex items-center justify-center">
+              <svg viewBox="0 0 200 200" className="w-full h-full absolute">
                 <circle
                   cx="100"
                   cy="100"
@@ -532,77 +414,37 @@ export default function BloodPressureSimulator() {
                 })}
               </svg>
 
+              {/* Aiguille rouge */}
               <div
+                className="absolute w-1 h-18 bg-rose-500 rounded-full origin-bottom shadow-lg"
                 style={{
-                  position: "absolute",
-                  width: "4px",
-                  height: "72px",
-                  background: "#f43f5e",
-                  borderRadius: "4px",
                   transform: `rotate(${needleAngle}deg)`,
                   transformOrigin: "50% 90%",
                   transition: "transform 100ms linear",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.5)",
                 }}
               />
 
-              <div
-                style={{
-                  position: "absolute",
-                  width: "14px",
-                  height: "14px",
-                  borderRadius: "50%",
-                  background: "#ffffff",
-                  border: "3px solid #0f172a",
-                  zIndex: 20,
-                }}
-              />
+              {/* Centre de cadran */}
+              <div className="absolute w-3.5 h-3.5 rounded-full bg-white border-2 border-slate-950 z-20" />
 
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: "20px",
-                  background: "#1e293b",
-                  border: "2px solid #475569",
-                  borderRadius: "8px",
-                  padding: "2px 8px",
-                  fontSize: "13px",
-                  fontWeight: "900",
-                  fontFamily: "monospace",
-                  color: "#38bdf8",
-                }}
-              >
-                {Math.round(pressure)} <span style={{ fontSize: "9px", color: "#94a3b8" }}>mmHg</span>
+              {/* Pression Digitale */}
+              <div className="absolute bottom-4 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-0.5 text-xs font-black font-mono text-cyan-400 shadow-sm">
+                {Math.round(pressure)} <span className="text-[9px] text-slate-400">mmHg</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 3. MANETTES DUOLINGO (BOUTONS 3D) */}
-        <div className="mt-4 space-y-3">
+        {/* 3. MANETTES DUOLINGO (BOUTONS RPG 3D) */}
+        <div className="space-y-3 pt-2">
           {/* Étape 1 : Gonfler / Dégonfler */}
           <div className="grid grid-cols-3 gap-2.5">
             <button
               onClick={handlePump}
-              style={{
-                background: "linear-gradient(180deg, #6366f1 0%, #4f46e5 100%)",
-                border: "3px solid #3730a3",
-                borderRadius: "16px",
-                padding: "10px 6px",
-                color: "#ffffff",
-                fontWeight: "900",
-                fontSize: "12px",
-                boxShadow: "0 4px 0 #312e81",
-                cursor: "pointer",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: "2px",
-              }}
-              className="active:translate-y-1 active:shadow-none transition-all"
+              className="btn-rpg-indigo py-3 px-2 text-xs flex-col"
             >
-              <span>🎈 Gonfler la poire</span>
-              <span style={{ fontSize: "10px", opacity: 0.85 }}>+25 mmHg</span>
+              <span>🎈 Gonfler poire</span>
+              <span className="text-[10px] text-indigo-200">+25 mmHg</span>
             </button>
 
             <button
@@ -611,105 +453,60 @@ export default function BloodPressureSimulator() {
                 setIsValveOpen(!isValveOpen);
               }}
               disabled={pressure === 0}
-              style={{
-                background: isValveOpen
-                  ? "linear-gradient(180deg, #f59e0b 0%, #d97706 100%)"
-                  : "linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%)",
-                border: "3px solid",
-                borderColor: isValveOpen ? "#b45309" : "#cbd5e1",
-                borderRadius: "16px",
-                padding: "10px 6px",
-                color: isValveOpen ? "#ffffff" : "#334155",
-                fontWeight: "900",
-                fontSize: "12px",
-                boxShadow: isValveOpen ? "0 4px 0 #78350f" : "0 4px 0 #94a3b8",
-                cursor: pressure === 0 ? "not-allowed" : "pointer",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: "2px",
-              }}
-              className="active:translate-y-1 active:shadow-none transition-all"
+              className={`py-3 px-2 rounded-2xl font-black text-xs flex flex-col items-center justify-center transition-all border ${
+                isValveOpen
+                  ? "bg-amber-500 text-slate-950 border-amber-300 shadow-lg shadow-amber-500/20"
+                  : "bg-slate-900 text-slate-200 border-slate-800 hover:bg-slate-800 disabled:opacity-40"
+              }`}
             >
               <span>{isValveOpen ? "⏸️ Pause" : "💨 Dégonfler"}</span>
-              <span style={{ fontSize: "10px", opacity: 0.85 }}>2-3 mmHg / s</span>
+              <span className="text-[10px] opacity-75">2-3 mmHg / s</span>
             </button>
 
             <button
               onClick={handleReset}
-              style={{
-                background: "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)",
-                border: "3px solid #cbd5e1",
-                borderRadius: "16px",
-                padding: "10px 6px",
-                color: "#64748b",
-                fontWeight: "900",
-                fontSize: "12px",
-                boxShadow: "0 4px 0 #94a3b8",
-                cursor: "pointer",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: "2px",
-              }}
-              className="active:translate-y-1 active:shadow-none transition-all"
+              className="py-3 px-2 rounded-2xl font-black text-xs bg-slate-900 text-slate-400 border border-slate-800 hover:text-white flex flex-col items-center justify-center"
             >
-              <span>🔄 Réinitialiser</span>
-              <span style={{ fontSize: "10px", opacity: 0.85 }}>0 mmHg</span>
+              <span>🔄 Reset</span>
+              <span className="text-[10px] opacity-60">0 mmHg</span>
             </button>
           </div>
 
           {/* Étape 2 : Clics Top Systole & Top Diastole */}
           <div className="grid grid-cols-2 gap-2.5 pt-1">
             <button
-              onClick={() => setMarkedPas(Math.round(pressure))}
-              disabled={pressure === 0}
-              style={{
-                background: markedPas !== null ? "#ecfdf5" : "#ffffff",
-                border: "3px solid",
-                borderColor: markedPas !== null ? "#10b981" : "#cbd5e1",
-                borderRadius: "16px",
-                padding: "10px 12px",
-                color: markedPas !== null ? "#065f46" : "#1e293b",
-                fontWeight: "900",
-                fontSize: "12px",
-                boxShadow: markedPas !== null ? "0 4px 0 #047857" : "0 4px 0 #cbd5e1",
-                cursor: pressure === 0 ? "not-allowed" : "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
+              onClick={() => {
+                setMarkedPas(Math.round(pressure));
+                playRetroSound("click");
               }}
-              className="active:translate-y-1 active:shadow-none transition-all"
+              disabled={pressure === 0}
+              className={`p-3 rounded-2xl border-2 font-black text-xs flex items-center justify-between transition-all ${
+                markedPas !== null
+                  ? "border-emerald-500 bg-emerald-950/60 text-emerald-300 shadow-md"
+                  : "border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-700 disabled:opacity-40"
+              }`}
             >
               <span>🎯 1. Top Systole (PAS)</span>
-              <span style={{ fontFamily: "monospace", fontSize: "13px", fontWeight: "900" }}>
-                {markedPas !== null ? `${markedPas} mmHg` : "Premier bruit"}
+              <span className="font-mono text-xs font-black">
+                {markedPas !== null ? `${markedPas} mmHg` : "1er bruit"}
               </span>
             </button>
 
             <button
-              onClick={() => setMarkedPad(Math.round(pressure))}
-              disabled={pressure === 0}
-              style={{
-                background: markedPad !== null ? "#ecfdf5" : "#ffffff",
-                border: "3px solid",
-                borderColor: markedPad !== null ? "#10b981" : "#cbd5e1",
-                borderRadius: "16px",
-                padding: "10px 12px",
-                color: markedPad !== null ? "#065f46" : "#1e293b",
-                fontWeight: "900",
-                fontSize: "12px",
-                boxShadow: markedPad !== null ? "0 4px 0 #047857" : "0 4px 0 #cbd5e1",
-                cursor: pressure === 0 ? "not-allowed" : "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
+              onClick={() => {
+                setMarkedPad(Math.round(pressure));
+                playRetroSound("click");
               }}
-              className="active:translate-y-1 active:shadow-none transition-all"
+              disabled={pressure === 0}
+              className={`p-3 rounded-2xl border-2 font-black text-xs flex items-center justify-between transition-all ${
+                markedPad !== null
+                  ? "border-emerald-500 bg-emerald-950/60 text-emerald-300 shadow-md"
+                  : "border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-700 disabled:opacity-40"
+              }`}
             >
               <span>🎯 2. Top Diastole (PAD)</span>
-              <span style={{ fontFamily: "monospace", fontSize: "13px", fontWeight: "900" }}>
-                {markedPad !== null ? `${markedPad} mmHg` : "Silence complet"}
+              <span className="font-mono text-xs font-black">
+                {markedPad !== null ? `${markedPad} mmHg` : "Silence"}
               </span>
             </button>
           </div>
@@ -718,21 +515,7 @@ export default function BloodPressureSimulator() {
           {markedPas !== null && markedPad !== null && !isEvaluated && (
             <button
               onClick={handleEvaluate}
-              style={{
-                width: "100%",
-                background: "linear-gradient(180deg, #10b981 0%, #059669 100%)",
-                border: "3px solid #047857",
-                borderRadius: "18px",
-                padding: "12px",
-                color: "#ffffff",
-                fontWeight: "900",
-                fontSize: "13px",
-                textTransform: "uppercase",
-                letterSpacing: "1px",
-                boxShadow: "0 4px 0 #064e3b",
-                cursor: "pointer",
-              }}
-              className="active:translate-y-1 active:shadow-none transition-all animate-bounce"
+              className="btn-rpg-gold w-full py-4 text-xs font-black uppercase tracking-wider animate-bounce-short shadow-amber-500/25"
             >
               🏆 Vérifier et évaluer ma mesure sémiologique !
             </button>
@@ -740,31 +523,25 @@ export default function BloodPressureSimulator() {
         </div>
       </div>
 
-      {/* 4. RÉSULTAT & SCORE GAMIFIÉ DUOLINGO */}
+      {/* 4. RÉSULTAT & SCORE GAMIFIÉ */}
       {isEvaluated && evaluationResult && (
         <div
-          style={{
-            background: "#ffffff",
-            border: "3px solid",
-            borderColor: evaluationResult.isExcellent ? "#10b981" : "#f59e0b",
-            borderRadius: "24px",
-            padding: "16px",
-            boxShadow: `0 6px 0 ${evaluationResult.isExcellent ? "#047857" : "#b45309"}`,
-          }}
-          className="space-y-3"
+          className={`card-rpg space-y-3 border-2 ${
+            evaluationResult.isExcellent ? "border-emerald-500 shadow-emerald-500/10" : "border-amber-400 shadow-amber-500/10"
+          }`}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span style={{ fontSize: "28px" }}>
+              <span className="text-3xl">
                 {evaluationResult.isExcellent ? "🎉" : "🩺"}
               </span>
               <div>
-                <h3 style={{ fontSize: "15px", fontWeight: "900", color: "#0f172a" }}>
+                <h3 className="text-base font-black text-white">
                   {evaluationResult.isExcellent
                     ? "Parfait ! Précision de cardiologue !"
                     : "Bien joué ! Mesure enregistrée"}
                 </h3>
-                <p style={{ fontSize: "12px", color: "#64748b", fontWeight: "700" }}>
+                <p className="text-xs font-black text-amber-400">
                   Récompense : +{evaluationResult.xp} XP • {scenario.nom}
                 </p>
               </div>
@@ -772,33 +549,22 @@ export default function BloodPressureSimulator() {
 
             <div className="flex gap-4 text-xs font-mono">
               <div>
-                <span style={{ fontSize: "10px", color: "#64748b", display: "block" }}>Votre saisie</span>
-                <strong style={{ fontSize: "13px", color: "#4f46e5" }}>
+                <span className="text-[10px] text-slate-400 block">Votre saisie</span>
+                <strong className="text-sm text-cyan-400">
                   {markedPas} / {markedPad} mmHg
                 </strong>
               </div>
               <div>
-                <span style={{ fontSize: "10px", color: "#64748b", display: "block" }}>Pression réelle</span>
-                <strong style={{ fontSize: "13px", color: "#059669" }}>
+                <span className="text-[10px] text-slate-400 block">Pression réelle</span>
+                <strong className="text-sm text-emerald-400">
                   {scenario.pas_cible} / {scenario.pad_cible} mmHg
                 </strong>
               </div>
             </div>
           </div>
 
-          <div
-            style={{
-              background: "#f8fafc",
-              border: "2px solid #e2e8f0",
-              borderRadius: "14px",
-              padding: "10px 12px",
-              fontSize: "12px",
-              color: "#334155",
-              lineHeight: "1.4",
-              fontWeight: "600",
-            }}
-          >
-            💡 <strong>Rappel clinique</strong> : {scenario.description} (Phase I de Korotkoff = PAS, Phase V = PAD).
+          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-3 text-xs text-slate-300 leading-relaxed font-medium">
+            💡 <strong className="text-amber-400">Rappel clinique</strong> : {scenario.description} (Phase I de Korotkoff = PAS, Phase V = PAD).
           </div>
 
           <button
@@ -806,23 +572,7 @@ export default function BloodPressureSimulator() {
               setScenarioIndex((scenarioIndex + 1) % SCENARIOS.length);
               handleReset();
             }}
-            style={{
-              width: "100%",
-              background: "#0f172a",
-              border: "3px solid #020617",
-              borderRadius: "16px",
-              padding: "10px",
-              color: "#ffffff",
-              fontWeight: "900",
-              fontSize: "13px",
-              boxShadow: "0 4px 0 #020617",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "8px",
-            }}
-            className="active:translate-y-1 active:shadow-none transition-all"
+            className="btn-rpg-gold w-full py-3.5 text-xs font-black uppercase tracking-wider"
           >
             <span>Passer au patient suivant ({scenarioIndex + 1}/{SCENARIOS.length})</span>
             <ArrowRight className="w-4 h-4" />

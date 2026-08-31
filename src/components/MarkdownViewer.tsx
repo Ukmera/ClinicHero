@@ -24,11 +24,11 @@ export default function MarkdownViewer({ content }: MarkdownViewerProps) {
           {currentList.map((item, liIdx) => (
             <li
               key={liIdx}
-              className="flex items-start gap-2.5 text-xs md:text-sm text-slate-700 bg-slate-50/80 border border-slate-200/70 p-2.5 rounded-xl font-medium"
+              className="flex items-start gap-2.5 text-xs md:text-sm text-slate-200 bg-slate-900/90 border border-slate-800 p-3 rounded-xl font-medium shadow-xs"
             >
-              <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0 mt-1.5" />
+              <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0 mt-1.5 shadow-xs" />
               <div
-                className="flex-1"
+                className="flex-1 leading-relaxed"
                 dangerouslySetInnerHTML={{
                   __html: formatBoldAndItalic(item),
                 }}
@@ -43,9 +43,9 @@ export default function MarkdownViewer({ content }: MarkdownViewerProps) {
 
   const formatBoldAndItalic = (text: string) => {
     return text
-      .replace(/\*\*(.*?)\*\*/g, "<strong class='font-extrabold text-slate-900'>$1</strong>")
-      .replace(/\*(.*?)\*/g, "<em class='italic text-slate-700'>$1</em>")
-      .replace(/`(.*?)`/g, "<code class='bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded-md font-mono text-xs'>$1</code>");
+      .replace(/\*\*(.*?)\*\*/g, "<strong class='font-black text-amber-300'>$1</strong>")
+      .replace(/\*(.*?)\*/g, "<em class='italic text-slate-300'>$1</em>")
+      .replace(/`(.*?)`/g, "<code class='bg-slate-950 border border-slate-800 text-indigo-300 px-1.5 py-0.5 rounded-md font-mono text-xs'>$1</code>");
   };
 
   for (let i = 0; i < lines.length; i++) {
@@ -62,8 +62,8 @@ export default function MarkdownViewer({ content }: MarkdownViewerProps) {
       const title = rawLine.replace("### ", "");
       renderedElements.push(
         <div key={`h3-${index++}`} className="mt-5 mb-2.5 flex items-center gap-2">
-          <div className="w-2 h-4 rounded-full bg-indigo-600" />
-          <h3 className="font-extrabold text-sm md:text-base text-slate-900">
+          <div className="w-1.5 h-4 rounded-full bg-amber-400" />
+          <h3 className="font-black text-sm md:text-base text-white tracking-tight">
             {title}
           </h3>
         </div>
@@ -75,9 +75,9 @@ export default function MarkdownViewer({ content }: MarkdownViewerProps) {
       flushList();
       const title = rawLine.replace("## ", "");
       renderedElements.push(
-        <div key={`h2-${index++}`} className="mt-6 mb-3 border-b border-slate-100 pb-2">
-          <h2 className="font-extrabold text-base md:text-lg text-slate-900 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-indigo-600" />
+        <div key={`h2-${index++}`} className="mt-6 mb-3 border-b border-slate-800 pb-2">
+          <h2 className="font-black text-base md:text-lg text-white flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-amber-400" />
             <span>{title}</span>
           </h2>
         </div>
@@ -91,11 +91,11 @@ export default function MarkdownViewer({ content }: MarkdownViewerProps) {
       renderedElements.push(
         <div
           key={`alert-${index++}`}
-          className="my-3 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-950 text-xs md:text-sm font-medium flex items-start gap-3 shadow-2xs"
+          className="my-3 p-4 rounded-2xl bg-rose-950/40 border border-rose-800 text-rose-200 text-xs md:text-sm font-medium flex items-start gap-3 shadow-md"
         >
-          <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+          <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
           <div
-            className="space-y-1 flex-1"
+            className="space-y-1 flex-1 leading-relaxed"
             dangerouslySetInnerHTML={{ __html: formatBoldAndItalic(rawLine) }}
           />
         </div>
@@ -119,13 +119,13 @@ export default function MarkdownViewer({ content }: MarkdownViewerProps) {
         renderedElements.push(
           <div
             key={`num-${index++}`}
-            className="my-2 p-3 bg-white border border-slate-200/80 rounded-xl flex items-start gap-3 shadow-2xs"
+            className="my-2 p-3.5 bg-slate-900/90 border border-slate-800 rounded-xl flex items-start gap-3 shadow-xs"
           >
-            <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-extrabold text-xs flex items-center justify-center shrink-0">
+            <span className="w-6 h-6 rounded-full bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
               {num}
             </span>
             <div
-              className="text-xs md:text-sm text-slate-800 flex-1 leading-relaxed"
+              className="text-xs md:text-sm text-slate-200 flex-1 leading-relaxed font-medium"
               dangerouslySetInnerHTML={{ __html: formatBoldAndItalic(text) }}
             />
           </div>
@@ -139,7 +139,7 @@ export default function MarkdownViewer({ content }: MarkdownViewerProps) {
     renderedElements.push(
       <p
         key={`p-${index++}`}
-        className="my-2 text-xs md:text-sm text-slate-700 leading-relaxed font-normal"
+        className="my-2 text-xs md:text-sm text-slate-200 leading-relaxed font-normal"
         dangerouslySetInnerHTML={{ __html: formatBoldAndItalic(rawLine) }}
       />
     );
@@ -147,5 +147,5 @@ export default function MarkdownViewer({ content }: MarkdownViewerProps) {
 
   flushList();
 
-  return <div className="space-y-1">{renderedElements}</div>;
+  return <div className="space-y-1 text-slate-200">{renderedElements}</div>;
 }

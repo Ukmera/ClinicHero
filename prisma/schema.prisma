@@ -21,6 +21,15 @@ model User {
   user_level          Int                  @default(1)
   streak_days         Int                  @default(0)
   last_activity_date  DateTime?
+  
+  // Champs RPG & Gamification Med-Retro
+  character_class      String?              @default("clerc") // "clerc", "alchimiste", "mage_ecg", "moine"
+  avatar_id            String?              @default("clerc_1")
+  current_title        String?              @default("Initié Sémiologue")
+  unlocked_titles_json String?              @default("[\"Initié Sémiologue\"]")
+  inventory_json       String?              @default("[\"stethoscope_bronze\"]")
+  mana_points          Int                  @default(100)
+  
   created_at          DateTime             @default(now())
   updated_at          DateTime             @updatedAt
   lesson_progress     UserLessonProgress[]

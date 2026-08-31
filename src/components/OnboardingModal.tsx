@@ -1,13 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { saveOnboardingProfileAction } from "@/app/actions/user";
-import { Sparkles, Stethoscope, GraduationCap, Award, ArrowRight, Check } from "lucide-react";
+import { CharacterClassId } from "@/lib/rpg/types";
+import ClassSelector from "./rpg/ClassSelector";
+import { Sparkles, Stethoscope, GraduationCap, Award, ArrowRight, Check, Shield } from "lucide-react";
+import { playRetroSound } from "@/lib/rpg/audio";
 
 interface OnboardingModalProps {
   initialProfession?: string | null;
   initialNiveau?: string | null;
   initialMode?: string | null;
+  initialClass?: string | null;
   isOpen: boolean;
   onClose?: () => void;
 }
@@ -16,15 +20,27 @@ export default function OnboardingModal({
   initialProfession = "medecine",
   initialNiveau = "debutant",
   initialMode = "complet",
+  initialClass = "clerc",
   isOpen,
   onClose,
 }: OnboardingModalProps) {
   const [step, setStep] = useState(1);
   const [profession, setProfession] = useState(initialProfession || "medecine");
   const [professionAutre, setProfessionAutre] = useState("");
+  const [characterClass, setCharacterClass] = useState<CharacterClassId>(
+    (initialClass as CharacterClassId) || "clerc"
+  );
+  const [avatarVariant, setAvatarVariant] = useState<1 | 2>(1);
   const [niveau, setNiveau] = useState(initialNiveau || "debutant");
   const [mode, setMode] = useState(initialMode || "complet");
   const [saving, setSaving] = useState(false);
+
+  // Auto-suggestion de classe en fonction de la filière
+  useEffect(() => {
+    if (profession === "medecine") setCharacterClass("clerc");
+    else if (profession === "pharma") setCharacterClass("alchimiste");
+    else if (profession === "kine" || profession === "osteo") setCharacterClass("moine");
+  }, [profession]);
 
   if (!isOpen) return null;
 
@@ -33,11 +49,14 @@ export default function OnboardingModal({
     const formData = new FormData();
     formData.append("profession", profession);
     formData.append("profession_autre", professionAutre);
+    formData.append("character_class", characterClass);
+    formData.append("avatar_id", `${characterClass}_${avatarVariant}`);
     formData.append("niveau_etudes", niveau);
     formData.append("mode_apprentissage", mode);
 
     await saveOnboardingProfileAction(formData);
     setSaving(false);
+    playRetroSound("levelup");
     if (onClose) onClose();
   };
 
@@ -89,20 +108,20 @@ export default function OnboardingModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 md:p-8 shadow-2xl space-y-6 my-8 animate-bounce-short">
+    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-700/80 rounded-3xl max-w-lg w-full p-6 md:p-8 text-slate-100 shadow-2xl space-y-6 my-8 animate-bounce-short">
         {/* Barre d'étapes */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-          <div className="flex items-center gap-2 text-xs font-bold text-indigo-600 uppercase tracking-wider">
-            <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
-            <span>Personnalisation Pédagogique ({step}/3)</span>
+        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div className="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-wider">
+            <Sparkles className="w-4 h-4 text-amber-400 fill-amber-400" />
+            <span>Initiation Sémiologique ({step}/4)</span>
           </div>
           <div className="flex gap-1.5">
-            {[1, 2, 3].map((s) => (
+            {[1, 2, 3, 4].map((s) => (
               <div
                 key={s}
-                className={`w-6 h-1.5 rounded-full transition-all ${
-                  s === step ? "bg-indigo-600" : s < step ? "bg-emerald-500" : "bg-slate-200"
+                className={`w-5 h-1.5 rounded-full transition-all ${
+                  s === step ? "bg-amber-400" : s < step ? "bg-emerald-500" : "bg-slate-800"
                 }`}
               />
             ))}
@@ -113,11 +132,11 @@ export default function OnboardingModal({
         {step === 1 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-xl font-extrabold text-slate-900">
+              <h2 className="text-xl font-extrabold text-white">
                 Quelle est ta filière de santé ?
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
-                Cela nous permet d&apos;ajuster les orientations cliniques de tes leçons.
+              <p className="text-xs text-slate-400 mt-1">
+                Ajuste les orientations cliniques et les cas pratiques de tes entraînements.
               </p>
             </div>
 
@@ -125,18 +144,22 @@ export default function OnboardingModal({
               {professions.map((p) => (
                 <button
                   key={p.id}
-                  onClick={() => setProfession(p.id)}
+                  type="button"
+                  onClick={() => {
+                    setProfession(p.id);
+                    playRetroSound("click");
+                  }}
                   className={`w-full text-left p-3.5 rounded-2xl border-2 transition-all flex items-center justify-between ${
                     profession === p.id
-                      ? "border-indigo-600 bg-indigo-50/70 text-indigo-950 shadow-xs"
-                      : "border-slate-200 hover:border-slate-300 bg-white text-slate-800"
+                      ? "border-amber-400 bg-slate-950 text-white shadow-xs"
+                      : "border-slate-800 hover:border-slate-700 bg-slate-900/80 text-slate-300"
                   }`}
                 >
                   <div>
                     <div className="font-bold text-sm">{p.label}</div>
-                    <div className="text-xs text-slate-500">{p.desc}</div>
+                    <div className="text-xs text-slate-400">{p.desc}</div>
                   </div>
-                  {profession === p.id && <Check className="w-5 h-5 text-indigo-600 shrink-0" />}
+                  {profession === p.id && <Check className="w-5 h-5 text-amber-400 shrink-0" />}
                 </button>
               ))}
 
@@ -146,30 +169,78 @@ export default function OnboardingModal({
                   placeholder="Précise ta profession (ex: Infirmier, Sage-femme...)"
                   value={professionAutre}
                   onChange={(e) => setProfessionAutre(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-indigo-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mt-2"
+                  className="w-full p-3 rounded-xl border border-slate-700 bg-slate-950 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 mt-2"
                 />
               )}
             </div>
 
             <button
-              onClick={() => setStep(2)}
-              className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md flex items-center justify-center gap-2 text-sm mt-4"
+              onClick={() => {
+                setStep(2);
+                playRetroSound("click");
+              }}
+              className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold rounded-xl shadow-md flex items-center justify-center gap-2 text-sm mt-4"
             >
-              <span>Continuer</span>
+              <span>Continuer vers le Choix de Classe</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         )}
 
-        {/* ÉTAPE 2 : Niveau */}
+        {/* ÉTAPE 2 : Classe & Avatar RPG */}
         {step === 2 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-xl font-extrabold text-slate-900">
+              <h2 className="text-xl font-extrabold text-white">
+                Choisis ton Archétype Médical ⚔️
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                Chaque classe possède un trait passif qui t&apos;assiste dans tes diagnostics.
+              </p>
+            </div>
+
+            <ClassSelector
+              selectedClass={characterClass}
+              onSelectClass={setCharacterClass}
+              selectedAvatarVariant={avatarVariant}
+              onSelectAvatarVariant={setAvatarVariant}
+            />
+
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setStep(1);
+                  playRetroSound("click");
+                }}
+                className="py-3 px-4 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 hover:text-white font-bold text-sm"
+              >
+                Retour
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setStep(3);
+                  playRetroSound("click");
+                }}
+                className="flex-1 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold rounded-xl shadow-md flex items-center justify-center gap-2 text-sm"
+              >
+                <span>Continuer</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ÉTAPE 3 : Niveau d'études */}
+        {step === 3 && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-xl font-extrabold text-white">
                 Quel est ton niveau actuel ?
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
-                Le contenu des cours et le degré d&apos;approfondissement s&apos;adapteront à ton profil.
+              <p className="text-xs text-slate-400 mt-1">
+                Le contenu des micro-cours s&apos;adaptera automatiquement à ton niveau de pratique.
               </p>
             </div>
 
@@ -179,19 +250,23 @@ export default function OnboardingModal({
                 return (
                   <button
                     key={n.id}
-                    onClick={() => setNiveau(n.id)}
+                    type="button"
+                    onClick={() => {
+                      setNiveau(n.id);
+                      playRetroSound("click");
+                    }}
                     className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-start gap-3.5 ${
                       niveau === n.id
-                        ? "border-indigo-600 bg-indigo-50/70 text-indigo-950 shadow-xs"
-                        : "border-slate-200 hover:border-slate-300 bg-white text-slate-800"
+                        ? "border-amber-400 bg-slate-950 text-white shadow-xs"
+                        : "border-slate-800 hover:border-slate-700 bg-slate-900/80 text-slate-300"
                     }`}
                   >
-                    <div className="p-2 rounded-xl bg-white border border-slate-200 shadow-2xs shrink-0 mt-0.5">
-                      <Icon className="w-5 h-5 text-indigo-600" />
+                    <div className="p-2 rounded-xl bg-slate-800 border border-slate-700 shadow-2xs shrink-0 mt-0.5">
+                      <Icon className="w-5 h-5 text-amber-400" />
                     </div>
                     <div className="space-y-0.5">
-                      <div className="font-bold text-sm text-slate-900">{n.title}</div>
-                      <div className="text-xs text-slate-600 leading-relaxed">{n.desc}</div>
+                      <div className="font-bold text-sm text-white">{n.title}</div>
+                      <div className="text-xs text-slate-400 leading-relaxed">{n.desc}</div>
                     </div>
                   </button>
                 );
@@ -200,14 +275,22 @@ export default function OnboardingModal({
 
             <div className="flex gap-2 pt-2">
               <button
-                onClick={() => setStep(1)}
-                className="py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm"
+                type="button"
+                onClick={() => {
+                  setStep(2);
+                  playRetroSound("click");
+                }}
+                className="py-3 px-4 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 hover:text-white font-bold text-sm"
               >
                 Retour
               </button>
               <button
-                onClick={() => setStep(3)}
-                className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md flex items-center justify-center gap-2 text-sm"
+                type="button"
+                onClick={() => {
+                  setStep(4);
+                  playRetroSound("click");
+                }}
+                className="flex-1 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold rounded-xl shadow-md flex items-center justify-center gap-2 text-sm"
               >
                 <span>Continuer</span>
                 <ArrowRight className="w-4 h-4" />
@@ -216,15 +299,15 @@ export default function OnboardingModal({
           </div>
         )}
 
-        {/* ÉTAPE 3 : Mode d'apprentissage */}
-        {step === 3 && (
+        {/* ÉTAPE 4 : Mode d'apprentissage */}
+        {step === 4 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-xl font-extrabold text-slate-900">
+              <h2 className="text-xl font-extrabold text-white">
                 Comment souhaites-tu apprendre ?
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
-                Tu pourras changer ce réglage à tout moment depuis ton profil.
+              <p className="text-xs text-slate-400 mt-1">
+                Tu pourras changer ce réglage à tout moment depuis ton Grimoire de profil.
               </p>
             </div>
 
@@ -232,35 +315,44 @@ export default function OnboardingModal({
               {modes.map((m) => (
                 <button
                   key={m.id}
-                  onClick={() => setMode(m.id)}
+                  type="button"
+                  onClick={() => {
+                    setMode(m.id);
+                    playRetroSound("click");
+                  }}
                   className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-start justify-between ${
                     mode === m.id
-                      ? "border-indigo-600 bg-indigo-50/70 text-indigo-950 shadow-xs"
-                      : "border-slate-200 hover:border-slate-300 bg-white text-slate-800"
+                      ? "border-amber-400 bg-slate-950 text-white shadow-xs"
+                      : "border-slate-800 hover:border-slate-700 bg-slate-900/80 text-slate-300"
                   }`}
                 >
                   <div className="space-y-0.5">
-                    <div className="font-bold text-sm text-slate-900">{m.title}</div>
-                    <div className="text-xs text-slate-600">{m.desc}</div>
+                    <div className="font-bold text-sm text-white">{m.title}</div>
+                    <div className="text-xs text-slate-400">{m.desc}</div>
                   </div>
-                  {mode === m.id && <Check className="w-5 h-5 text-indigo-600 shrink-0" />}
+                  {mode === m.id && <Check className="w-5 h-5 text-amber-400 shrink-0" />}
                 </button>
               ))}
             </div>
 
             <div className="flex gap-2 pt-2">
               <button
-                onClick={() => setStep(2)}
-                className="py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm"
+                type="button"
+                onClick={() => {
+                  setStep(3);
+                  playRetroSound("click");
+                }}
+                className="py-3 px-4 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 hover:text-white font-bold text-sm"
               >
                 Retour
               </button>
               <button
+                type="button"
                 onClick={handleFinish}
                 disabled={saving}
-                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md flex items-center justify-center gap-2 text-sm"
+                className="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-slate-950 font-extrabold rounded-xl shadow-md flex items-center justify-center gap-2 text-sm"
               >
-                <span>{saving ? "Enregistrement..." : "Valider mon profil 🚀"}</span>
+                <span>{saving ? "Invocation en cours..." : "Entrer dans l'Ordre 🏰"}</span>
               </button>
             </div>
           </div>

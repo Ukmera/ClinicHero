@@ -4,18 +4,18 @@ import Navbar from "@/components/Navbar";
 import BottomNav from "@/components/BottomNav";
 
 export const metadata: Metadata = {
-  title: "ClinicHero - Sémiologie Clinique Gamifiée",
-  description: "Apprends et mémorise durablement la sémiologie clinique médicale avec une pédagogie progressive et répétition espacée.",
+  title: "ClinicHero - Sémiologie Clinique Med-RPG",
+  description: "Apprends et mémorise durablement la sémiologie clinique médicale dans un univers RPG rétro 16-bit immersif.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
-    title: "ClinicHero",
+    statusBarStyle: "black-translucent",
+    title: "ClinicHero RPG",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#4f46e5",
+  themeColor: "#090d16",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -28,10 +28,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className="h-full">
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900 antialiased selection:bg-indigo-500 selection:text-white">
+    <html lang="fr" className="h-full dark">
+      <body className="min-h-full flex flex-col bg-slate-950 text-slate-100 antialiased selection:bg-amber-500 selection:text-slate-950">
         <Navbar />
-        <main className="flex-1 pb-20 md:pb-10">{children}</main>
+        <main className="flex-1 pb-24 md:pb-12">{children}</main>
         <BottomNav />
       </body>
     </html>

@@ -10,141 +10,107 @@ import {
   Award,
   Activity,
   Layers,
+  FlaskConical,
+  Wand2,
 } from "lucide-react";
 import BloodPressureSimulator from "@/components/BloodPressureSimulator";
 import HeartSoundSimulator from "@/components/HeartSoundSimulator";
+import { playRetroSound } from "@/lib/rpg/audio";
 
 export default function SimulationsPage() {
   const [activeTab, setActiveTab] = useState<"tension" | "auscultation">("tension");
 
   return (
-    <div style={{ maxWidth: "880px", margin: "0 auto", padding: "20px 16px" }} className="space-y-4">
-      {/* Bouton Retour */}
+    <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+      {/* Bouton Retour aux Donjons */}
       <div>
         <Link
           href="/"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            background: "#ffffff",
-            border: "2px solid #cbd5e1",
-            borderRadius: "14px",
-            padding: "6px 14px",
-            fontSize: "12px",
-            fontWeight: "800",
-            color: "#475569",
-            textDecoration: "none",
-            boxShadow: "0 2px 0 #cbd5e1",
-          }}
-          className="hover:bg-slate-50 transition-colors"
+          onClick={() => playRetroSound("click")}
+          className="inline-flex items-center gap-1.5 text-xs font-black text-slate-400 hover:text-amber-400 transition-colors uppercase tracking-wider bg-slate-900 border border-slate-800 px-3.5 py-2 rounded-xl shadow-xs"
         >
-          <ArrowLeft className="w-4 h-4 text-indigo-600" />
-          <span>Retour au parcours</span>
+          <ArrowLeft className="w-4 h-4 text-amber-400" />
+          <span>Retour aux Donjons</span>
         </Link>
       </div>
 
-      {/* En-tête de l'Atelier Pratique (Style Cartoon Moderne) */}
-      <div
-        style={{
-          background: "linear-gradient(135deg, #312e81 0%, #1e1b4b 50%, #0f172a 100%)",
-          border: "3px solid #4338ca",
-          borderRadius: "28px",
-          padding: "22px 24px",
-          color: "#ffffff",
-          boxShadow: "0 6px 0 #1e1b4b",
-        }}
-        className="relative overflow-hidden"
-      >
-        <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-indigo-300 mb-1">
-          <Sparkles className="w-4 h-4 text-amber-400 fill-amber-400" />
-          <span>Laboratoire & Gestes Cliniques Virtuels</span>
+      {/* En-tête du Laboratoire des Alchimistes (Style Med-RPG Sombre) */}
+      <div className="bg-slate-950 text-white rounded-3xl p-6 md:p-7 shadow-2xl border border-slate-800 relative overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-15 pixel-rendering"
+          style={{ backgroundImage: "url('/pixel-crawler/mockups/Tavern.png')" }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/90 to-emerald-950/80" />
+
+        <div className="relative z-10 space-y-2">
+          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-emerald-400">
+            <FlaskConical className="w-4 h-4" />
+            <span>Forge & Laboratoire Clinique Virtuel</span>
+          </div>
+          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+            Atelier des Gestes Sémiologiques
+          </h1>
+          <p className="text-slate-300 text-xs md:text-sm max-w-xl leading-relaxed">
+            Entraîne-toi aux gestes cardiovasculaires en temps réel avec des mascottes interactives et des moteurs de synthèse acoustique Web Audio.
+          </p>
         </div>
-        <h1 style={{ fontSize: "24px", fontWeight: "900", letterSpacing: "-0.5px" }} className="md:text-3xl">
-          Atelier des Gestes Sémiologiques
-        </h1>
-        <p style={{ fontSize: "13px", color: "#c7d2fe", fontWeight: "600", marginTop: "4px", maxWidth: "600px" }}>
-          Entraîne-toi aux gestes cardiovasculaires en temps réel avec des mascottes interactives et des moteurs de synthèse acoustique.
-        </p>
       </div>
 
-      {/* Sélecteur des Simulateurs (2 Gros Boutons 3D) */}
+      {/* Sélecteur des Simulateurs (2 Boutons RPG Tactiles 3D) */}
       <div className="grid grid-cols-2 gap-3">
         <button
-          onClick={() => setActiveTab("tension")}
-          style={{
-            background: activeTab === "tension" ? "#ffffff" : "#f8fafc",
-            border: "3px solid",
-            borderColor: activeTab === "tension" ? "#4f46e5" : "#cbd5e1",
-            borderRadius: "22px",
-            padding: "12px 16px",
-            textAlign: "left",
-            boxShadow: activeTab === "tension" ? "0 5px 0 #3730a3" : "0 3px 0 #cbd5e1",
-            transform: activeTab === "tension" ? "translateY(-2px)" : "none",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            transition: "all 0.15s ease",
+          onClick={() => {
+            setActiveTab("tension");
+            playRetroSound("click");
           }}
+          className={`p-4 rounded-2xl border-2 text-left transition-all flex items-center gap-3.5 ${
+            activeTab === "tension"
+              ? "border-amber-400 bg-slate-900 shadow-lg shadow-amber-500/10 scale-[1.01]"
+              : "border-slate-800 bg-slate-950/80 hover:border-slate-700 hover:bg-slate-900"
+          }`}
         >
           <div
-            style={{
-              width: "42px",
-              height: "42px",
-              borderRadius: "14px",
-              background: activeTab === "tension" ? "#4f46e5" : "#e2e8f0",
-              color: activeTab === "tension" ? "#ffffff" : "#475569",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "20px",
-            }}
+            className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 border ${
+              activeTab === "tension"
+                ? "bg-amber-400 text-slate-950 border-amber-300 shadow-sm"
+                : "bg-slate-900 text-slate-400 border-slate-800"
+            }`}
           >
             🩺
           </div>
           <div>
-            <div style={{ fontWeight: "900", fontSize: "14px", color: "#0f172a" }}>Prise de Tension</div>
-            <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700" }}>Bruits de Korotkoff</div>
+            <div className={`font-black text-sm ${activeTab === "tension" ? "text-amber-400" : "text-white"}`}>
+              Prise de Pression
+            </div>
+            <div className="text-[11px] text-slate-400 font-medium">Bruits de Korotkoff & Sphygmo</div>
           </div>
         </button>
 
         <button
-          onClick={() => setActiveTab("auscultation")}
-          style={{
-            background: activeTab === "auscultation" ? "#ffffff" : "#f8fafc",
-            border: "3px solid",
-            borderColor: activeTab === "auscultation" ? "#4f46e5" : "#cbd5e1",
-            borderRadius: "22px",
-            padding: "12px 16px",
-            textAlign: "left",
-            boxShadow: activeTab === "auscultation" ? "0 5px 0 #3730a3" : "0 3px 0 #cbd5e1",
-            transform: activeTab === "auscultation" ? "translateY(-2px)" : "none",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            transition: "all 0.15s ease",
+          onClick={() => {
+            setActiveTab("auscultation");
+            playRetroSound("click");
           }}
+          className={`p-4 rounded-2xl border-2 text-left transition-all flex items-center gap-3.5 ${
+            activeTab === "auscultation"
+              ? "border-emerald-400 bg-slate-900 shadow-lg shadow-emerald-500/10 scale-[1.01]"
+              : "border-slate-800 bg-slate-950/80 hover:border-slate-700 hover:bg-slate-900"
+          }`}
         >
           <div
-            style={{
-              width: "42px",
-              height: "42px",
-              borderRadius: "14px",
-              background: activeTab === "auscultation" ? "#4f46e5" : "#e2e8f0",
-              color: activeTab === "auscultation" ? "#ffffff" : "#475569",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "20px",
-            }}
+            className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 border ${
+              activeTab === "auscultation"
+                ? "bg-emerald-400 text-slate-950 border-emerald-300 shadow-sm"
+                : "bg-slate-900 text-slate-400 border-slate-800"
+            }`}
           >
             🎧
           </div>
           <div>
-            <div style={{ fontWeight: "900", fontSize: "14px", color: "#0f172a" }}>Stéthoscope Virtuel</div>
-            <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700" }}>Auscultation & Souffles</div>
+            <div className={`font-black text-sm ${activeTab === "auscultation" ? "text-emerald-400" : "text-white"}`}>
+              Stéthoscope Virtuel
+            </div>
+            <div className="text-[11px] text-slate-400 font-medium">Foyers & Souffles Cardiaques</div>
           </div>
         </button>
       </div>
