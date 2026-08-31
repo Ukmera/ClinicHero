@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Stethoscope, Heart, Info, Sparkles } from "lucide-react";
+import { playRetroSound } from "@/lib/rpg/audio";
 
 interface InteractiveChestDiagramProps {
   mode?: "auscultation" | "douleur";
@@ -58,7 +59,7 @@ export default function InteractiveChestDiagram({
   const current = foyers[activeFoyer as keyof typeof foyers] || foyers.aortique;
 
   return (
-    <div className="bg-slate-900 text-white rounded-3xl p-5 md:p-6 shadow-xl space-y-4">
+    <div className="bg-slate-900 text-white rounded-3xl p-5 md:p-6 shadow-xl space-y-4 border border-slate-800">
       <div className="flex items-center justify-between border-b border-slate-800 pb-3">
         <div className="flex items-center gap-2">
           <Stethoscope className="w-5 h-5 text-indigo-400" />
@@ -111,7 +112,10 @@ export default function InteractiveChestDiagram({
             return (
               <button
                 key={f.id}
-                onClick={() => setActiveFoyer(f.id)}
+                onClick={() => {
+                  setActiveFoyer(f.id);
+                  playRetroSound("click");
+                }}
                 style={{ left: `${f.x}%`, top: `${f.y}%` }}
                 className={`absolute -translate-x-1/2 -translate-y-1/2 w-9 h-9 rounded-full font-black text-xs flex items-center justify-center transition-all ${
                   isSelected
@@ -146,7 +150,7 @@ export default function InteractiveChestDiagram({
 
           <div className="pt-2 flex items-center gap-1.5 text-[11px] text-amber-400 font-bold">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Mnémo : A (Aorte) $\rightarrow$ P (Pulm.) $\rightarrow$ T (Tricusp.) $\rightarrow$ M (Mitral)</span>
+            <span>Mnémo : A (Aorte) → P (Pulm.) → T (Tricusp.) → M (Mitral)</span>
           </div>
         </div>
       </div>
