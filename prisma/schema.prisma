@@ -1,0 +1,134 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                  String               @id @default(cuid())
+  email               String               @unique
+  password_hash       String
+  name                String?
+  profession          String?              @default("medecine") // "medecine", "kine", "osteo", "pharma", "autre"
+  profession_autre    String?              // Précision si "autre"
+  niveau_etudes       String?              @default("debutant") // "debutant" (1-3e), "avance" (4-6e), "praticien" (diplômé)
+  mode_apprentissage  String?              @default("complet")  // "complet", "synthetique", "pratique_directe"
+  onboarding_complete Boolean              @default(false)
+  xp_total            Int                  @default(0)
+  user_level          Int                  @default(1)
+  streak_days         Int                  @default(0)
+  last_activity_date  DateTime?
+  created_at          DateTime             @default(now())
+  updated_at          DateTime             @updatedAt
+  lesson_progress     UserLessonProgress[]
+  card_progress       UserCardProgress[]
+}
+
+model Module {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  nom_fr          String
+  nom_en          String?
+  description_fr  String
+  description_en  String?
+  systeme         String   @default("cardio")
+  ordre_affichage Int      @default(1)
+  icone           String?
+  color           String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  lessons         Lesson[]
+}
+
+model Lesson {
+  id                  String               @id @default(cuid())
+  module_id           String
+  slug                String               @unique
+  nom_fr              String
+  nom_en              String?
+  description_fr      String
+  description_en      String?
+  niveau_difficulte   Int                  @default(1)
+  ordre_affichage     Int                  @default(1)
+  xp_reward           Int                  @default(25)
+  
+  // Contenu pédagogique enrichi (Micro-cours adaptatif)
+  cours_intro_fr      String?              // Résumé essentiel
+  cours_detaille_fr   String?              // Cours approfondi avec mécanismes (1ère-3ème année)
+  cours_points_cles_fr String?             // Points clés / réflexes cliniques (4-6ème année)
+  pieges_cliniques_fr String?              // Pièges à éviter & drapeaux rouges
+  mnemonique          String?              // Moyen mnémotechnique (ex: A-P-T-M, P-I-E-D)
+  carte_mentale_json  String?              // Arbre décisionnel / mindmap en JSON
+  
+  created_at          DateTime             @default(now())
+  updated_at          DateTime             @updatedAt
+  module              Module               @relation(fields: [module_id], references: [id], onDelete: Cascade)
+  cards               Card[]
+  user_progress       UserLessonProgress[]
+}
+
+model Card {
+  id                String             @id @default(cuid())
+  lesson_id         String
+  systeme           String             @default("cardio")
+  niveau_difficulte Int                @default(1)
+  type_question     String             // "QCM", "VRAI_FAUX", "ASSOCIATION", "ORDRE", "CAS_CLINIQUE", "TEXTE_SIMPLE"
+  question_fr       String
+  question_en       String?
+  contexte_clinique String?            // Vignette clinique / histoire patient
+  options_json      String             // JSON structuré des options
+  reponse_correcte  String             // JSON ou clé de la réponse
+  feedback_fr       String
+  feedback_en       String?
+  mnemonique_rappel String?            // Mnémotechnique affiché en cas d'erreur / révision
+  reference         String             // Ex: "[UNESS-Cardio] p.12-14 ; [Coustet] p.35"
+  tags              String?
+  illustration_url  String?
+  created_at        DateTime           @default(now())
+  updated_at        DateTime           @updatedAt
+  lesson            Lesson             @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+  user_progress     UserCardProgress[]
+}
+
+model GlossaryTerm {
+  id            String   @id @default(cuid())
+  terme         String   @unique
+  definition_fr String
+  systeme       String   @default("cardio")
+  exemples      String?
+  created_at    DateTime @default(now())
+}
+
+model UserLessonProgress {
+  id                String    @id @default(cuid())
+  user_id           String
+  lesson_id         String
+  mastery_level     Int       @default(0) // 0 à 5
+  deja_aborde_cours Boolean   @default(false)
+  last_practiced_at DateTime?
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  user              User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  lesson            Lesson    @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, lesson_id])
+}
+
+model UserCardProgress {
+  id                     String    @id @default(cuid())
+  user_id                String
+  card_id                String
+  srs_niveau             Int       @default(0) // Leitner 0 à 5
+  srs_succes_consecutifs Int       @default(0)
+  srs_prochaine_revue    DateTime?
+  last_reviewed_at       DateTime?
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
+  user                   User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  card                   Card      @relation(fields: [card_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, card_id])
+}

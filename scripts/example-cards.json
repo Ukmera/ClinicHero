@@ -1,0 +1,34 @@
+[
+  {
+    "lesson_slug": "douleur-thoracique-angineuse",
+    "systeme": "cardio",
+    "niveau_difficulte": 1,
+    "type_question": "QCM",
+    "question_fr": "Quelle est la durée caractéristique d'une crise d'angor d'effort typique non compliquée ?",
+    "options_json": [
+      { "id": "A", "text": "Moins de 15 minutes (habituellement 2 à 5 min)", "is_correct": true },
+      { "id": "B", "text": "Plusieurs heures d'affilée en continu", "is_correct": false },
+      { "id": "C", "text": "Une fraction de seconde sous forme de coup d'aiguille", "is_correct": false },
+      { "id": "D", "text": "Au moins 24 à 48 heures sans interruption", "is_correct": false }
+    ],
+    "reponse_correcte": "A",
+    "feedback_fr": "L'angor d'effort cède classiquement en 2 à 5 minutes après l'arrêt de l'effort ou la prise de trinitrine. Une douleur persistant plus de 20 minutes fait suspecter un syndrome coronarien aigu constitué (SCA).",
+    "reference": "[UNESS-Cardio] p.15 ; [Bourdarias] p.36",
+    "tags": "angor,duree,douleur-thoracique"
+  },
+  {
+    "lesson_slug": "organisation-inspection-palpation",
+    "systeme": "cardio",
+    "niveau_difficulte": 1,
+    "type_question": "VRAI_FAUX",
+    "question_fr": "La turgescence jugulaire et le reflux hépato-jugulaire sont des signes d'insuffisance cardiaque droite.",
+    "options_json": [
+      { "id": "true", "text": "Vrai", "is_correct": true },
+      { "id": "false", "text": "Faux", "is_correct": false }
+    ],
+    "reponse_correcte": "true",
+    "feedback_fr": "Vrai. Ils témoignent d'une augmentation de la pression veineuse centrale et d'une gêne au remplissage des cavités droites.",
+    "reference": "[Coustet] Sémiologie médicale, p.58 ; [Bariéty] p.120",
+    "tags": "turgescence-jugulaire,coeur-droit,insuffisance-cardiaque"
+  }
+]
