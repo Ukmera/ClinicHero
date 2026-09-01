@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Lancement de l'injection exhaustive des connaissances Cardio V1...");
+  console.log("🌱 Déploiement exhaustif des 5 Chapitres & 5 Boss du Monde 1 (Cardiovasculaire)...");
 
   // Nettoyage préalable pour ré-injection propre
   await prisma.glossaryTerm.deleteMany();
@@ -16,93 +16,58 @@ async function main() {
   await prisma.user.deleteMany();
 
   // =========================================================================
-  // 1. GLOSSAIRE MÉDICAL SÉMIOLOGIQUE ENRICHI (Coustet, Bariéty, Bates, McGee)
+  // 1. GLOSSAIRE MÉDICAL SÉMIOLOGIQUE ENRICHI
   // =========================================================================
   const glossary = [
     {
       terme: "Angor (Angine de poitrine)",
-      definition_fr: "Douleur thoracique paroxystique rétrosternale constrictive résultant d'une inadéquation transitoire entre les besoins en oxygène du myocarde et les apports par les artères coronaires.",
-      exemples: "Angor d'effort classique (cédant au repos), Angor instable (syndrome coronarien aigu menaçant sans élévation initiale de troponine).",
+      definition_fr: "Douleur thoracique paroxystique rétrosternale constrictive résultant d'une ischémie myocardique transitoire.",
+      exemples: "Angor d'effort stable (cédant au repos en < 3 min), Angor instable (SCA menaçant).",
     },
     {
       terme: "Signe de Levine",
-      definition_fr: "Geste spontané du patient décrivant sa douleur en serrant son poing fermé contre son sternum. Très forte spécificité pour une ischémie myocardique aiguë.",
-      exemples: "Sensibilité ~80 % et spécificité élevée pour le syndrome coronarien aigu [McGee Evidence-Based Physical Diagnosis].",
+      definition_fr: "Geste spontané du patient décrivant sa douleur en serrant son poing fermé contre son sternum.",
+      exemples: "Très forte spécificité pour l'ischémie myocardique aiguë [McGee].",
     },
     {
       terme: "Orthopnée",
-      definition_fr: "Dyspnée survenant en décubitus dorsal et soulagée par le passage en position assise ou debout, due à la redistribution de la masse sanguine vers le thorax augmentant la pression capillaire pulmonaire.",
-      exemples: "Quantifiée par le nombre d'oreillers nécessaires pour dormir (ex: orthopnée à 3 oreillers).",
+      definition_fr: "Dyspnée survenant en décubitus dorsal et soulagée par la position assise ou debout.",
+      exemples: "Quantifiée par le nombre d'oreillers (ex: orthopnée à 3 oreillers dans l'IVG).",
     },
     {
       terme: "Dyspnée paroxystique nocturne (DPN)",
-      definition_fr: "Accès de suffocation brutale réveillant le patient après 2 à 4 heures de sommeil, l'obligeant à s'asseoir au bord du lit ou à ouvrir la fenêtre.",
-      exemples: "Signe clinique très spécifique d'insuffisance ventriculaire gauche sévère.",
-    },
-    {
-      terme: "Turgescence jugulaire",
-      definition_fr: "Gonflement visible des veines jugulaires externes à la base du cou, examiné chez un patient incliné à 45°, témoignant d'une augmentation de la pression veineuse centrale.",
-      exemples: "Signe cardinal d'insuffisance cardiaque droite, de péricardite constrictive ou de tamponnade.",
+      definition_fr: "Accès de suffocation brutale réveillant le patient après 2 à 4 heures de sommeil.",
+      exemples: "Signe très spécifique d'insuffisance ventriculaire gauche sévère.",
     },
     {
       terme: "Reflux hépato-jugulaire (RHJ / Signe de Rondot)",
-      definition_fr: "Majoration durable (> 3 secondes) de la turgescence jugulaire provoquée par une pression manuelle douce et prolongée (15 à 30 secondes) de l'hypochondre droit.",
-      exemples: "Témoigne de l'incapacité du ventricule droit à absorber un surcroît de retour veineux [Bariéty p.122].",
-    },
-    {
-      terme: "Signe de Kussmaul (veineux)",
-      definition_fr: "Augmentation paradoxale de la turgescence jugulaire lors de l'inspiration profonde (au lieu de la diminution physiologique normale).",
-      exemples: "Signe classique de péricardite constrictive, de tamponnade ou d'infarctus du ventricule droit [Bates p.310].",
-    },
-    {
-      terme: "Choc de pointe",
-      definition_fr: "Soulèvement systolique perçu sous la pulpe des doigts au niveau de l'apex cardiaque (normalement situé au 5e espace intercostal gauche, ligne médioclaviculaire).",
-      exemples: "Dévié en bas et à gauche en cas de dilatation ventriculaire gauche ; étalé et hyperdynamique (choc en dôme de Bard) dans l'insuffisance aortique volumineuse.",
+      definition_fr: "Majoration durable (> 3 sec) de la turgescence jugulaire provoquée par une pression manuelle de l'hypochondre droit.",
+      exemples: "Témoigne de l'insuffisance ventriculaire droite [Bariéty p.122].",
     },
     {
       terme: "Signe de Harzer",
-      definition_fr: "Perception des battements du ventricule droit hypertrophié ou dilaté à la palpation sous l'appendice xiphoïde en faisant inspirer profondément le patient.",
-      exemples: "Signe cardinal d'hypertrophie ventriculaire droite ou de cœur pulmonaire chronique [Coustet p.58].",
-    },
-    {
-      terme: "Bruit B1",
-      definition_fr: "Premier bruit cardiaque (« Toum »), sourd et grave, marquant le début de la systole ventriculaire. Causé par la fermeture synchrone des valves atrio-ventriculaires (Mitrale M1 et Tricuspide T1).",
-      exemples: "Synchrone de la montée de l'onde pulsatile carotidienne et radiale.",
-    },
-    {
-      terme: "Bruit B2 & Dédoublement physiologique",
-      definition_fr: "Deuxième bruit cardiaque (« Ta »), sec et plus aigu, marquant la fin de la systole ventriculaire. Causé par la fermeture des valves sigmoïdes (Aortique A2 puis Pulmonaire P2).",
-      exemples: "Dédoublement physiologique audible à l'inspiration profonde au foyer pulmonaire ; dédoublement large et fixe pathognomonique de la CIA [Jules Constant p.112].",
+      definition_fr: "Perception des battements du ventricule droit dilaté à la palpation sous l'appendice xiphoïde.",
+      exemples: "Signe cardinal d'hypertrophie ventriculaire droite ou de cœur pulmonaire chronique.",
     },
     {
       terme: "Bruit de Galop (B3 / B4)",
-      definition_fr: "Bruit surajouté protodiastolique (B3, remplissage passif rapide dans un VG dilaté) ou télédiastolique/présystolique (B4, contraction atriale puissante contre un VG rigide).",
-      exemples: "B3 très évocateur d'insuffisance cardiaque avec dysfonction systolique gauche.",
+      definition_fr: "Bruit surajouté protodiastolique (B3, remplissage rapide VG dilaté) ou télédiastolique (B4, contraction atriale contre VG rigide).",
+      exemples: "B3 très évocateur d'insuffisance cardiaque avec FEVG altérée.",
     },
     {
       terme: "Manœuvre de Rivero-Carvallo",
-      definition_fr: "Augmentation de l'intensité d'un souffle cardiaque lors d'une inspiration profonde, due à l'augmentation du retour veineux vers les cavités droites.",
-      exemples: "Permet de différencier formellement un souffle d'insuffisance tricuspide (positif) d'un souffle d'insuffisance mitrale (inchangé ou diminué).",
+      definition_fr: "Augmentation de l'intensité d'un souffle cardiaque lors d'une inspiration profonde.",
+      exemples: "Différencie formellement l'insuffisance tricuspide (positive) de l'insuffisance mitrale (négative).",
     },
     {
-      terme: "Pouls paradoxal de Kussmaul (artériel)",
-      definition_fr: "Diminution anormale de la pression artérielle systolique de plus de 10 mmHg lors de l'inspiration profonde.",
-      exemples: "Signe d'extrême gravité témoignant d'une tamponnade péricardique compressive ou d'un asthme aigu grave [McGee p.352].",
+      terme: "Signe de Homans",
+      definition_fr: "Douleur provoquée au mollet lors de la dorsiflexion passive du pied dans la TVP.",
+      exemples: "Associé à la perte du ballottement du mollet et à un œdème unilatéral.",
     },
     {
-      terme: "Signe de Musset",
-      definition_fr: "Secousses ou hochements involontaires de la tête synchrones des battements cardiaques, résultant d'une grande pression pulsée.",
-      exemples: "Signe périphérique classique de l'insuffisance aortique massive [Bariéty p.130].",
-    },
-    {
-      terme: "Frottement péricardique",
-      definition_fr: "Bruit superficiel, râpeux ou de « cuir neuf », systolo-diastolique à 3 composantes, persistant en apnée respiratoire et variant d'une heure à l'autre.",
-      exemples: "Signe physique pathognomonique de la péricardite aiguë sans épanchement abondant [Coustet p.64].",
-    },
-    {
-      terme: "Fraction d'éjection ventriculaire gauche (FEVG)",
-      definition_fr: "Pourcentage du volume télédiastolique éjecté par le ventricule gauche à chaque systole. Normale supérieure ou égale à 50 %.",
-      exemples: "FEVG < 40 % = insuffisance cardiaque à fraction d'éjection altérée (IC-FEr) [UNESS-Cardio p.34].",
+      terme: "Index de Pression Systolique (IPS)",
+      definition_fr: "Rapport entre la PAS à la cheville et la PAS humérale. Normale : 0.90 à 1.30.",
+      exemples: "IPS < 0.90 affirme l'Artériopathie Oblitérante des Membres Inférieurs (AOMI).",
     },
   ];
 
@@ -118,17 +83,13 @@ async function main() {
     data: {
       email: "demo@clinichero.fr",
       name: "Interne Démo",
-      profession: "medecine",
-      niveau_etudes: "debutant",
-      mode_apprentissage: "complet",
-      onboarding_complete: true,
       password_hash,
-      xp_total: 120,
       user_level: 2,
+      xp_total: 250,
       streak_days: 3,
       hp_current: 100,
       hp_max: 100,
-      mana_current: 100,
+      mana_current: 140,
       mana_max: 200,
       gems: 50,
       character_class: "clerc",
@@ -138,15 +99,15 @@ async function main() {
     },
   });
 
-  // ==========================================
-  // MONDE 0 : SANCTUAIRE D'INITIATION (TUTO)
-  // ==========================================
-  console.log("🧙‍♂️ Monde 0 : Sanctuaire d'Initiation & La Grande Blouse...");
+  // =========================================================================
+  // MONDE 0 : SANCTUAIRE D'INITIATION (TUTO LA GRANDE BLOUSE)
+  // =========================================================================
+  console.log("🧙‍♂️ Monde 0 : Sanctuaire d'Initiation...");
   const module0 = await prisma.module.create({
     data: {
       slug: "monde-0-tutoriel",
       nom_fr: "Monde 0 : Sanctuaire d'Initiation",
-      description_fr: "Fais tes premiers pas avec La Grande Blouse, apprends à gérer tes PV/Mana et lance ton premier sort de diagnostic !",
+      description_fr: "Fais tes premiers pas avec La Grande Blouse et apprends à maîtriser ton grimoire de sorts.",
       systeme: "tutoriel",
       ordre_affichage: 0,
       icone: "Sparkles",
@@ -159,7 +120,7 @@ async function main() {
       module_id: module0.id,
       slug: "tutoriel-la-grande-blouse",
       nom_fr: "L'Éveil du Sémiologue & La Grande Blouse",
-      description_fr: "Découvre les secrets du royaume d'Aethelgard, tes jauges de vitalité et la puissance de ton grimoire arcanique.",
+      description_fr: "Découvre tes 100 PV, ton Mana et le lancement de sorts arcaniques au lit du malade.",
       niveau_difficulte: 1,
       ordre_affichage: 1,
       xp_reward: 50,
@@ -169,19 +130,8 @@ async function main() {
       boss_avatar: "👻",
       rooms_count: 3,
       cours_intro_fr: "Bienvenue à Aethelgard ! En tant qu'Initié, ton stéthoscope et ton sens clinique sont tes meilleures armes contre les erreurs médicales.",
-      cours_detaille_fr: "Chaque question répondue correctement restaure ton Mana (+20 Mana) et te rapproche de la victoire. En cas d'erreur, tes points de vie diminuent (-15 PV). N'hésite jamais à invoquer tes sorts (50/50, indices, potions) en cas de doute !",
-      cours_points_cles_fr: "• Règle 1 : Observer le patient avant de toucher.\n• Règle 2 : Ne jamais négliger un drapeau rouge (douleur constrictive, syncope d'effort).\n• Règle 3 : Utiliser ton Mana avec sagesse.",
-      pieges_cliniques_fr: "Le piège du débutant : se précipiter sans lire l'énoncé. Prends toujours le temps d'analyser le terrain du patient !",
+      cours_points_cles_fr: "• Règle 1 : Observer le patient avant de toucher.\n• Règle 2 : Ne jamais négliger un drapeau rouge.\n• Règle 3 : Utiliser ton Mana pour lancer tes sorts (50/50, indices).",
       mnemonique: "P-I-E-D : Péricardite, Infarctus (SCA), Embolie pulmonaire, Dissection aortique.",
-      carte_mentale_json: JSON.stringify({
-        id: "root",
-        label: "Initiation Sémiologique",
-        children: [
-          { id: "pv", label: "Points de Vie (100 PV) : Vigilance face aux erreurs" },
-          { id: "mana", label: "Mana (200 Max) : Carburant des sortilèges" },
-          { id: "sorts", label: "Grimoire : 50/50, Indices, Potions" },
-        ],
-      }),
     },
   });
 
@@ -199,12 +149,11 @@ async function main() {
           { id: "A", text: "Recueillir les signes physiques et symptômes pour poser un diagnostic méthodique", is_correct: true },
           { id: "B", text: "Remplacer systématiquement l'examen clinique par un scanner", is_correct: false },
           { id: "C", text: "Prescrire des médicaments au hasard en espérant une guérison", is_correct: false },
-          { id: "D", text: "Apprendre par cœur des définitions sans jamais écouter le patient", is_correct: false },
         ]),
         reponse_correcte: "A",
-        feedback_fr: "Exactement ! La sémiologie est le socle de toute la médecine : savoir interroger, observer, palper et ausculter avant tout examen complémentaire.",
+        feedback_fr: "Exactement ! La sémiologie est le socle de toute la médecine : interroger, observer, palper et ausculter avec rigueur.",
         reference: "[Baptiste Coustet] p.12-14",
-        tags: "initiation,sémiologie,bases",
+        tags: "initiation,sémiologie",
       },
       {
         lesson_id: lesson0_1.id,
@@ -213,12 +162,12 @@ async function main() {
         type_question: "VRAI_FAUX",
         room_number: 2,
         room_type: "standard",
-        question_fr: "VRAI ou FAUX : Lorsque tu as un doute dans un donjon, tu peux dépenser du Mana pour lancer un sort 50/50 ou consulter un indice sans perdre de PV.",
+        question_fr: "VRAI ou FAUX : Lorsque tu as un doute dans un donjon, tu peux dépenser du Mana pour lancer un sort 50/50 ou un indice sans risquer tes PV.",
         options_json: JSON.stringify(["VRAI", "FAUX"]),
         reponse_correcte: "VRAI",
-        feedback_fr: "Vrai ! Ton Mana est là pour t'aider : utilise tes sorts (50/50, Indices) pour éviter de perdre des PV face aux questions pièges.",
-        reference: "[Manuel d'Aethelgard]",
-        tags: "sorts,mana,gameplay",
+        feedback_fr: "Vrai ! Ton Mana te permet d'activer tes sorts de diagnostic pour franchir les salles de donjon.",
+        reference: "[Grimoire d'Aethelgard]",
+        tags: "sorts,mana",
       },
       {
         lesson_id: lesson0_1.id,
@@ -227,108 +176,57 @@ async function main() {
         type_question: "CAS_CLINIQUE",
         room_number: 3,
         room_type: "boss_guardian",
-        contexte_clinique: "Un homme de 58 ans ressent une vive douleur rétrosternale angoissante qui lui serre la poitrine « comme dans un étau » et irradie vers sa mâchoire depuis 30 minutes.",
+        contexte_clinique: "Un homme de 58 ans ressent une vive douleur rétrosternale angoissante « en étau » irradiant à la mâchoire depuis 30 minutes.",
         question_fr: "Quelle est l'urgence vitale cardiovasculaire à suspecter immédiatement ?",
         options_json: JSON.stringify([
           { id: "A", text: "Un Syndrome Coronarien Aigu (Infarctus du myocarde)", is_correct: true },
-          { id: "B", text: "Une simple courbature musculaire bénigne", is_correct: false },
-          { id: "C", text: "Un reflux gastrique sans gravité", is_correct: false },
-          { id: "D", text: "Une crise d'angoisse isolée", is_correct: false },
+          { id: "B", text: "Une simple courbature musculaire", is_correct: false },
+          { id: "C", text: "Un reflux gastrique banal", is_correct: false },
         ]),
         reponse_correcte: "A",
-        feedback_fr: "Bravo ! Toute douleur rétrosternale constrictive prolongée irradiant à la mâchoire est un Syndrome Coronarien Aigu jusqu'à preuve du contraire (ECG 12 dérivations en urgence).",
-        reference: "[UNESS-Cardio] p.12 ; [Coustet] p.48",
-        tags: "douleur_thoracique,angor,urgence",
+        feedback_fr: "Bravo ! Toute douleur rétrosternale constrictive prolongée est un Syndrome Coronarien Aigu jusqu'à preuve du contraire.",
+        reference: "[UNESS-Cardio] p.12",
+        tags: "SCA,urgence",
       },
     ],
   });
 
-  // ==========================================
-  // MODULE 1 : SIGNES FONCTIONNELS CARDIO
-  // ==========================================
-  console.log("📦 Module 1 : Signes fonctionnels approfondis...");
+  // =========================================================================
+  // CHAPITRE 1 : DOULEUR THORACIQUE & ISCHÉMIE CORONARIENNE
+  // =========================================================================
+  console.log("🫀 Chapitre 1 : Douleur Thoracique & Ischémie Coronarienne...");
   const module1 = await prisma.module.create({
     data: {
-      slug: "cardio-signes-fonctionnels",
-      nom_fr: "Signes fonctionnels & Symptômes",
-      nom_en: "Cardiovascular Symptoms & History",
-      description_fr: "Identifier et caractériser les motifs de consultation cardiologiques urgents et fréquents.",
+      slug: "chapitre-1-douleur-thoracique",
+      nom_fr: "Chapitre 1 : Douleur Thoracique & Ischémie Coronarienne",
+      description_fr: "Disséquer l'angor, le syndrome coronarien aigu et éliminer les 4 urgences vitales PIED avant de défier le Spectre de l'Infarctus.",
       systeme: "cardio",
       ordre_affichage: 1,
-      icone: "HeartHandshake",
+      icone: "Heart",
       color: "rose",
     },
   });
 
-  // Leçon 1.1 : Douleur thoracique
+  // 1.1 Angor
   const lesson1_1 = await prisma.lesson.create({
     data: {
       module_id: module1.id,
       slug: "douleur-thoracique-angineuse",
-      nom_fr: "Douleur thoracique & Angor",
-      description_fr: "Reconnaître le syndrome coronarien aigu, les 5 critères de l'angor et éliminer les 4 urgences vitales PIED.",
+      nom_fr: "Donjon 1.1 : Angor d'effort stable & Signe de Levine",
+      description_fr: "Reconnaître les 5 critères de l'angor d'effort, le signe de Levine et le test aux dérivés nitrés.",
       niveau_difficulte: 1,
       ordre_affichage: 1,
-      xp_reward: 25,
-      cours_intro_fr: "La douleur thoracique aiguë impose une démarche réflexe : éliminer immédiatement les 4 urgences vitales (mnémotechnique PIED) et caractériser précisément les 5 critères de l'angor coronarien selon l'interrogatoire méthodique PARASITE.",
-      cours_detaille_fr: `### 1. L'Interrogatoire Méthodique de la Douleur (Mnémotechnique PARASITE)
-D'après les traités de sémiologie médicale (*Coustet p.48, Bariéty p.110*) :
-- **P - Position / Siège** : Rétrosternal médiothoracique, « en barre » ou « en étau » (constrictive).
-- **A - Allure / Début** : Brutal ou progressif, d'emblée maximal ou d'intensité croissante.
-- **R - Rythme / Durée** : Brève (< 5 à 15 min dans l'angor stable) ou prolongée (> 20 min dans le SCA / Infarctus).
-- **A - Ancienneté** : Premier épisode inaugural (angor de novo) ou douleur récidivante connue.
-- **S - Signes d'accompagnement** : Sueurs profuses, angoisse avec sensation de mort imminente, nausées, vomissements, polypnée.
-- **I - Irradiations** : Mandibule, mâchoire inférieure, épaule gauche, bord ulnaire du membre supérieur gauche jusqu'aux 4e et 5e doigts.
-- **T - Type / Caractère** : Brûlure profonde, striction, écrasement, pesanteur médiothoracique.
-- **E - Évolution & Déclencheurs** : Déclenchée par l'effort, la marche en côte, le vent froid, le stress ; **soulagée en moins de 3 minutes par le repos ou la trinitrine sublinguale**.
-
-### 2. Les 4 Urgences Vitales Cardiovasculaires (Mnémotechnique PIED)
-1. **P - Péricardite aiguë** : Douleur prolongée, augmentée en inspiration profonde et en décubitus dorsal, nettement **soulagée par la position assise penchée en avant**. Présence possible d'un frottement péricardique systolo-diastolique.
-2. **I - Infarctus du myocarde (SCA)** : Douleur rétrosternale constrictive > 20 minutes, résistante à la trinitrine, angoisse majeure, sueurs. Onde de Pardee à l'ECG.
-3. **E - Embolie pulmonaire** : Douleur basithoracique rythmée par la respiration (point de côté pleural), polypnée brutale, tachycardie, anxiété, hémoptysie tardive.
-4. **D - Dissection aortique** : Douleur d'emblée maximale, déchirante, migratrice postérieure (dorsale inter-scapulaire puis lombaire descendante). Asymétrie tensionnelle (> 20 mmHg) et abolition d'un pouls périphérique.
-
-### 3. Signe de Levine & Présentations Trompeuses
-- **Signe de Levine** : Le patient porte spontanément son poing fermé sur le sternum (sensibilité ~80 % pour l'ischémie myocardique selon *Steven McGee*).
-- **Formes atypiques et indolores** : Chez la femme, le sujet âgé et le diabétique (neuropathie autonome), l'infarctus peut être totalement indolore et se manifester uniquement par une dyspnée aiguë inexpliquée, un malaise ou des troubles digestifs (nausées, épigastralgies).`,
-      cours_points_cles_fr: `- Angor typique = Rétrosternal + Constrictif + Déclenché à l'effort + Cède en < 5 min au repos ou sous trinitrine.
-- Douleur > 20 min résistante aux nitrés = Syndrome Coronarien Aigu (SCA / Infarctus) -> Appel SAMU 15.
-- Douleur calmée en position assise penchée en avant = Péricardite aiguë.
-- Douleur déchirante dorsale descendante + asymétrie des pouls = Dissection aortique aiguë.
-- Toute douleur thoracique aiguë impose un **ECG 12 dérivations dans les 10 premières minutes**.`,
-      pieges_cliniques_fr: `⚠️ **Pièges & Drapeaux Rouges Majeurs** :
-- Une douleur thoracique soulagée par les dérivés nitrés n'exclut pas à 100 % un spasme œsophagien (qui peut aussi réagir aux nitrés).
-- Chez le sujet diabétique, tout malaise inexpliqué ou essoufflement brutal doit faire réaliser un ECG immédiat pour éliminer un infarctus indolore.`,
-      mnemonique: "P-I-E-D (Péricardite, Infarctus, Embolie, Dissection) & P-A-R-A-S-I-T-E pour l'interrogatoire de la douleur.",
-      carte_mentale_json: JSON.stringify({
-        title: "Arbre décisionnel : Douleur Thoracique Aiguë",
-        nodes: [
-          {
-            label: "Douleur Thoracique Aiguë",
-            children: [
-              {
-                label: "4 Urgences Vitales (PIED)",
-                children: [
-                  { label: "Péricardite (calmée assis penché en avant, frottement)" },
-                  { label: "Infarctus / SCA (constriction > 20 min, irradiation bras/mâchoire)" },
-                  { label: "Embolie Pulmonaire (dyspnée brutale, point de côté pleural)" },
-                  { label: "Dissection Aortique (déchirante, dorsale descendante, asymétrie pouls)" },
-                ],
-              },
-              {
-                label: "Angor d'effort stable",
-                children: [
-                  { label: "Cède en < 5 min au repos ou sous trinitrine sublinguale" },
-                ],
-              },
-            ],
-          },
-        ],
-      }),
+      xp_reward: 30,
+      gems_reward: 10,
+      dungeon_type: "standard",
+      boss_name: "Sentinelle de l'Angor",
+      rooms_count: 3,
+      cours_intro_fr: "L'angor résulte d'une ischémie myocardique transitoire. Il se caractérise par une douleur rétrosternale constrictive survenant à l'effort et cédant rapidement au repos ou sous trinitrine.",
+      cours_points_cles_fr: "• Rétrosternale constrictive (« en étau »).\n• Irradiations : mâchoire, épaule gauche, bord ulnaire du bras.\n• Cède en moins de 3 minutes au repos ou après trinitrine sublinguale.",
+      mnemonique: "P-A-R-A-S-I-T-E : Position, Allure, Rythme, Ancienneté, Signes associés, Irradiations, Type, Évolution.",
     },
   });
 
-  // Cartes Leçon 1.1
   await prisma.card.createMany({
     data: [
       {
@@ -336,35 +234,32 @@ D'après les traités de sémiologie médicale (*Coustet p.48, Bariéty p.110*) 
         systeme: "cardio",
         niveau_difficulte: 1,
         type_question: "QCM",
-        contexte_clinique: "Un homme de 58 ans décrit une douleur apparue en marchant rapidement par temps froid.",
-        question_fr: "Quel est le siège et le caractère typique de la douleur coronarienne angineuse ?",
+        room_number: 1,
+        room_type: "standard",
+        contexte_clinique: "Un homme de 62 ans ressent une vive gêne thoracique en marchant en côte contre le vent froid.",
+        question_fr: "Quel est le caractère sémiologique le plus typique de la douleur coronarienne ?",
         options_json: JSON.stringify([
-          { id: "A", text: "Rétrosternale constrictive (« en étau »)", is_correct: true },
-          { id: "B", text: "Sous-mammaire gauche punctiforme", is_correct: false },
-          { id: "C", text: "Abdominale épigastrique postprandiale", is_correct: false },
-          { id: "D", text: "Latéro-thoracique droite rythmée par la toux", is_correct: false },
+          { id: "A", text: "Rétrosternale constrictive (« en étau ») irradiant au bras gauche et à la mâchoire", is_correct: true },
+          { id: "B", text: "Sous-mammaire gauche punctiforme augmentée par la palpation", is_correct: false },
+          { id: "C", text: "Point de côté basithoracique rythmée par la toux", is_correct: false },
         ]),
         reponse_correcte: "A",
-        feedback_fr: "La douleur angineuse typique est rétrosternale médiothoracique, constrictive (« en étau »), irradiant vers la mandibule et le membre supérieur gauche.",
-        mnemonique_rappel: "Angor = Rétrosternal constrictif d'effort, cédant sous trinitrine en < 3 min.",
-        reference: "[Coustet] Sémiologie médicale, p.48 ; [Bariéty] p.110",
-        tags: "angor,douleur-thoracique,urgence",
+        feedback_fr: "La douleur angineuse typique est rétrosternale médiothoracique, constrictive, irradiant à la mandibule et au bras gauche.",
+        reference: "[Coustet] Sémiologie médicale p.48",
+        tags: "angor,douleur,coronaires",
       },
       {
         lesson_id: lesson1_1.id,
         systeme: "cardio",
         niveau_difficulte: 1,
         type_question: "VRAI_FAUX",
-        contexte_clinique: "Lors de l'interrogatoire d'une douleur thoracique :",
-        question_fr: "Une douleur thoracique calmée rapidement par la prise de trinitrine sublinguale oriente fortement vers une ischémie myocardique.",
-        options_json: JSON.stringify([
-          { id: "true", text: "Vrai", is_correct: true },
-          { id: "false", text: "Faux", is_correct: false },
-        ]),
-        reponse_correcte: "true",
-        feedback_fr: "Vrai. La sédation de la douleur en moins de 2 à 3 minutes après trinitrine (test aux dérivés nitrés) est un argument sémiologique majeur.",
-        mnemonique_rappel: "Test aux nitrés : positif en moins de 3 min si origine coronarienne.",
-        reference: "[Bourdarias] Sémiologie cardiovasculaire, p.32",
+        room_number: 2,
+        room_type: "standard",
+        question_fr: "VRAI ou FAUX : Une douleur angineuse stable cède habituellement en moins de 3 à 5 minutes après arrêt de l'effort ou prise de trinitrine sublinguale.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Vrai ! La sédation rapide au repos ou sous dérivés nitrés est un critère diagnostique majeur de l'angor stable.",
+        reference: "[Bariéty / Capron] p.110",
         tags: "trinitrine,angor",
       },
       {
@@ -372,283 +267,118 @@ D'après les traités de sémiologie médicale (*Coustet p.48, Bariéty p.110*) 
         systeme: "cardio",
         niveau_difficulte: 2,
         type_question: "CAS_CLINIQUE",
-        contexte_clinique: "Un patient de 65 ans hypertendu décrit une douleur thoracique brutale, 'déchirante', irradiant dans le dos entre les omoplates et descendant vers les lombes.",
-        question_fr: "Quel diagnostic d'extrême urgence devez-vous suspecter en priorité absolue ?",
+        room_number: 3,
+        room_type: "guardian",
+        contexte_clinique: "Au cours de la consultation, le patient porte spontanément son poing fermé contre le milieu de son sternum pour décrire son oppression.",
+        question_fr: "Quel est le nom de ce signe sémiologique classique à haute valeur prédictive d'ischémie ?",
         options_json: JSON.stringify([
-          { id: "A", text: "Dissection aortique aiguë", is_correct: true },
-          { id: "B", text: "Péricardite aiguë bénigne", is_correct: false },
-          { id: "C", text: "Reflux gastro-œsophagien", is_correct: false },
-          { id: "D", text: "Pneumothorax spontané", is_correct: false },
+          { id: "A", text: "Le signe de Levine", is_correct: true },
+          { id: "B", text: "Le signe de Harzer", is_correct: false },
+          { id: "C", text: "Le signe de Homans", is_correct: false },
         ]),
         reponse_correcte: "A",
-        feedback_fr: "La douleur à type de déchirure, débutant brutalement et migrant vers le dos et les lombes, est pathognomonique de la dissection de l'aorte thoracique.",
-        mnemonique_rappel: "PIED : L'irradiation dorsale descendante signe la Dissection aortique !",
-        reference: "[Bariéty / Capron] Sémiologie clinique, p.112",
-        tags: "dissection-aortique,urgence",
-      },
-      {
-        lesson_id: lesson1_1.id,
-        systeme: "cardio",
-        niveau_difficulte: 2,
-        type_question: "ASSOCIATION",
-        question_fr: "Associez chaque profil de douleur thoracique à sa caractéristique sémiologique :",
-        options_json: JSON.stringify({
-          pairs: [
-            { item: "Péricardite aiguë", match: "Calmée en position assise penché en avant" },
-            { item: "Infarctus du myocarde", match: "Constriction > 20 min résistante aux nitrés" },
-            { item: "Dissection aortique", match: "Irradiation descendante dorsale et lombaire" },
-            { item: "Embolie pulmonaire", match: "Point de côté basi-thoracique avec dyspnée aiguë" },
-          ],
-        }),
-        reponse_correcte: JSON.stringify({
-          "Péricardite aiguë": "Calmée en position assise penché en avant",
-          "Infarctus du myocarde": "Constriction > 20 min résistante aux nitrés",
-          "Dissection aortique": "Irradiation descendante dorsale et lombaire",
-          "Embolie pulmonaire": "Point de côté basi-thoracique avec dyspnée aiguë",
-        }),
-        feedback_fr: "Ces 4 caractéristiques permettent d'orienter le diagnostic dès les premières minutes de l'interrogatoire.",
-        reference: "[Coustet] p.50 ; [UNESS-Cardio] p.16",
-        tags: "urgences,sémiologie",
-      },
-      {
-        lesson_id: lesson1_1.id,
-        systeme: "cardio",
-        niveau_difficulte: 2,
-        type_question: "QCM",
-        contexte_clinique: "En sémiologie cardiologique basée sur les preuves :",
-        question_fr: "Quel nom porte le signe où le patient décrit sa douleur en serrant son poing fermé contre son sternum ?",
-        options_json: JSON.stringify([
-          { id: "A", text: "Signe de Levine", is_correct: true },
-          { id: "B", text: "Signe de Musset", is_correct: false },
-          { id: "C", text: "Signe de Corrigan", is_correct: false },
-          { id: "D", text: "Signe de Rivero-Carvallo", is_correct: false },
-        ]),
-        reponse_correcte: "A",
-        feedback_fr: "Le signe de Levine (poing serré sur le sternum) traduit la striction médiothoracique de l'ischémie myocardique [McGee Evidence-Based Physical Diagnosis p.320].",
-        reference: "[McGee] Evidence-Based Physical Diagnosis, p.320",
-        tags: "signe-levine,sémiologie,ischémie",
+        feedback_fr: "Le signe de Levine (poing fermé sur le sternum) est très spécifique de l'ischémie myocardique constrictive [McGee p.320].",
+        reference: "[McGee] p.320",
+        tags: "levine,sémiologie",
       },
     ],
   });
 
-  // Leçon 1.2 : Dyspnée & Insuffisance Cardiaque
+  // 1.2 SCA
   const lesson1_2 = await prisma.lesson.create({
     data: {
       module_id: module1.id,
-      slug: "dyspnee-cardiologique",
-      nom_fr: "Dyspnée & Insuffisance Cardiaque",
-      description_fr: "Classification NYHA et Killip, orthopnée, râles crépitants et signes de surcharge droite/gauche.",
-      niveau_difficulte: 1,
+      slug: "syndrome-coronarien-aigu",
+      nom_fr: "Donjon 1.2 : Syndrome Coronarien Aigu (SCA ST+ / ST-)",
+      description_fr: "Douleur prolongée > 20 minutes résistante aux nitrés, onde de Pardee et élévation de troponine.",
+      niveau_difficulte: 2,
       ordre_affichage: 2,
-      xp_reward: 25,
-      cours_intro_fr: "La dyspnée cardiaque est le témoin d'une élévation des pressions de remplissage ventriculaires. Elle se quantifie selon la classification NYHA et s'accompagne de signes d'insuffisance cardiaque gauche (poumons) ou droite (veines systémiques).",
-      cours_detaille_fr: `### 1. Classification Fonctionnelle NYHA (New York Heart Association)
-- **Stade I** : Aucune gêne lors des activités physiques ordinaires (dyspnée uniquement aux efforts intenses ou prolongés).
-- **Stade II** : Limitation légère lors des efforts importants de la vie courante (ex: montée de plus de deux étages, marche rapide).
-- **Stade III** : Limitation marquée lors des activités légères de la vie quotidienne (ex: marche à plat sur 100m, habillage).
-- **Stade IV** : Incapacité d'accomplir le moindre effort sans inconfort, dyspnée présente **au repos**.
-
-### 2. Signes Cardinaux d'Insuffisance Cardiaque Gauche (Surcharge pulmonaire)
-- **Orthopnée** : Dyspnée en décubitus dorsal obligeant le patient à dormir le buste surélevé par plusieurs oreillers.
-- **Dyspnée paroxystique nocturne (DPN)** : Réveils en suffocation nocturne après 2 à 4 heures de sommeil.
-- **Râles crépitants alvéolaires** : Bruits fins en « frottement de mèches de cheveux », bilatéraux, symétriques, débutant aux bases et montant vers les sommets (« marée montante » dans l'OAP).
-- **Bruit de galop protodiastolique (B3)** à l'apex : Traduit le remplissage passif rapide dans un VG dilaté et peu compliant.
-
-### 3. Signes Cardinaux d'Insuffisance Cardiaque Droite (Surcharge veineuse systémique)
-- **Turgescence jugulaire** spontanée à 45° et **Reflux hépato-jugulaire (RHJ / Signe de Rondot)** provoqué par une pression de 15 à 30 secondes sur le foie.
-- **Hépatomégalie douloureuse** : Foie cardiaque lisse, à bord inférieur régulier, sensible à la palpation (« foie accordéon »).
-- **Œdèmes des membres inférieurs** : Bilatéraux, déclives, blancs, mous, indolores et gardant le godet.
-- **Signe de Kussmaul veineux** : Majoration paradoxale de la turgescence jugulaire à l'inspiration profonde (*Bates p.310*).`,
-      cours_points_cles_fr: `- Orthopnée = Insuffisance cardiaque gauche (hyperpression capillaire pulmonaire).
-- Signes droits = Turgescence jugulaire + Reflux hépato-jugulaire + Œdèmes à godet + Hépatomégalie douloureuse.
-- NYHA 4 stades : I (Efforts intenses) -> II (Efforts modérés) -> III (Efforts légers) -> IV (Repos).
-- Galop B3 = Rythme à 3 temps pathognomonique de la défaillance ventriculaire gauche.`,
-      pieges_cliniques_fr: `⚠️ **Attention** :
-- Des râles crépitants bilatéraux qui montent rapidement vers les sommets pulmonaires avec polypnée, sueurs et grésillement laryngé signent l'**Œdème Aigu du Poumon (OAP)** : urgence thérapeutique absolue.
-- Ne pas confondre les œdèmes cardiaques (mous, blancs, bilatéraux prenant le godet) avec un œdème unilatéral inflammatoire de phlébite (rouge, chaud, douloureux).`,
-      mnemonique: "NYHA : I (Intense) -> II (Moyen) -> III (Léger) -> IV (Repos).",
-      carte_mentale_json: JSON.stringify({
-        title: "Insuffisance Cardiaque : Cœur Gauche vs Cœur Droit",
-        nodes: [
-          {
-            label: "Signes d'Insuffisance Cardiaque",
-            children: [
-              {
-                label: "Cœur Gauche (Poumons)",
-                children: [
-                  { label: "Dyspnée d'effort (NYHA I-IV)" },
-                  { label: "Orthopnée & Dyspnée nocturne (DPN)" },
-                  { label: "Râles crépitants bilatéraux aux bases" },
-                  { label: "Bruit de Galop gauche (B3)" },
-                ],
-              },
-              {
-                label: "Cœur Droit (Périphérie / Veines)",
-                children: [
-                  { label: "Turgescence jugulaire & Reflux hépato-jugulaire" },
-                  { label: "Hépatomégalie douloureuse au reflux" },
-                  { label: "Œdèmes des membres inférieurs (blancs, mous, godet)" },
-                  { label: "Signe de Kussmaul veineux (inspiration)" },
-                ],
-              },
-            ],
-          },
-        ],
-      }),
+      xp_reward: 35,
+      gems_reward: 12,
+      dungeon_type: "standard",
+      boss_name: "Golem d'Ischémie Aiguë",
+      rooms_count: 3,
+      cours_intro_fr: "Le SCA représente l'occlusion aiguë d'une artère coronaire. Toute douleur constrictive prolongée de plus de 20 minutes impose un ECG 12 dérivations immédiat.",
+      cours_points_cles_fr: "• Douleur > 20 min résistante aux nitrés.\n• Onde de Pardee (sus-décalage ST englobant l'onde T).\n• Troponine ultrasensible élevée.",
+      mnemonique: "Time is Muscle : Désobstruction d'urgence dans les 120 minutes !",
     },
   });
 
-  // Cartes Leçon 1.2
   await prisma.card.createMany({
     data: [
       {
         lesson_id: lesson1_2.id,
         systeme: "cardio",
-        niveau_difficulte: 1,
-        type_question: "ORDRE",
-        question_fr: "Classez les stades de dyspnée selon la classification NYHA (de la moins sévère à la plus sévère) :",
-        options_json: JSON.stringify({
-          items: [
-            "Stade I : Aucune limitation lors des activités physiques ordinaires",
-            "Stade II : Limitation modérée lors des efforts importants",
-            "Stade III : Limitation marquée lors des efforts de la vie quotidienne",
-            "Stade IV : Incapacité d'effectuer le moindre effort, dyspnée au repos",
-          ],
-        }),
-        reponse_correcte: JSON.stringify([
-          "Stade I : Aucune limitation lors des activités physiques ordinaires",
-          "Stade II : Limitation modérée lors des efforts importants",
-          "Stade III : Limitation marquée lors des efforts de la vie quotidienne",
-          "Stade IV : Incapacité d'effectuer le moindre effort, dyspnée au repos",
-        ]),
-        feedback_fr: "La classification NYHA comporte 4 stades cardinaux de sévérité croissante.",
-        reference: "[Coustet] Sémiologie médicale, p.52 ; [UNESS-Cardio] p.38",
-        tags: "NYHA,dyspnée",
-      },
-      {
-        lesson_id: lesson1_2.id,
-        systeme: "cardio",
-        niveau_difficulte: 1,
+        niveau_difficulte: 2,
         type_question: "QCM",
-        question_fr: "Comment qualifie-t-on une dyspnée survenant en position couchée et obligeant le patient à surélever sa tête par des oreillers ?",
+        room_number: 1,
+        room_type: "standard",
+        contexte_clinique: "Un homme de 54 ans présente une douleur constrictive médiothoracique avec sueurs profuses depuis 45 minutes, non calmée par la trinitrine.",
+        question_fr: "Quelle est la conduite à tenir immédiate prioritaire ?",
         options_json: JSON.stringify([
-          { id: "A", text: "Orthopnée", is_correct: true },
-          { id: "B", text: "Platypnée", is_correct: false },
-          { id: "C", text: "Trepopnée", is_correct: false },
-          { id: "D", text: "Bradypnée expiratoire", is_correct: false },
+          { id: "A", text: "Appel immédiat du SAMU (Centre 15) et réalisation d'un ECG 12 dérivations sans délai", is_correct: true },
+          { id: "B", text: "Prescrire des antalgiques simples et revoir le patient dans 48h", is_correct: false },
         ]),
         reponse_correcte: "A",
-        feedback_fr: "L'orthopnée est la dyspnée de décubitus, hautement caractéristique de l'insuffisance ventriculaire gauche.",
-        reference: "[Coustet] p.52 ; [Bates] Guide de l'examen clinique, p.290",
-        tags: "orthopnée,sémiologie",
+        feedback_fr: "Toute douleur thoracique prolongée résistante aux nitrés est un SCA jusqu'à preuve du contraire.",
+        reference: "[UNESS-Cardio] p.18",
+        tags: "SCA,urgence,ECG",
       },
       {
         lesson_id: lesson1_2.id,
         systeme: "cardio",
         niveau_difficulte: 2,
-        type_question: "ASSOCIATION",
-        question_fr: "Associez chaque signe clinique au côté du cœur principalement défaillant :",
-        options_json: JSON.stringify({
-          pairs: [
-            { item: "Râles crépitants pulmonaires bilatéraux", match: "Insuffisance cardiaque Gauche" },
-            { item: "Orthopnée à 3 oreillers", match: "Insuffisance cardiaque Gauche" },
-            { item: "Turgescence jugulaire & Reflux hépato-jugulaire", match: "Insuffisance cardiaque Droite" },
-            { item: "Œdèmes des membres inférieurs prenant le godet", match: "Insuffisance cardiaque Droite" },
-          ],
-        }),
-        reponse_correcte: JSON.stringify({
-          "Râles crépitants pulmonaires bilatéraux": "Insuffisance cardiaque Gauche",
-          "Orthopnée à 3 oreillers": "Insuffisance cardiaque Gauche",
-          "Turgescence jugulaire & Reflux hépato-jugulaire": "Insuffisance cardiaque Droite",
-          "Œdèmes des membres inférieurs prenant le godet": "Insuffisance cardiaque Droite",
-        }),
-        feedback_fr: "Le cœur gauche retentit sur les poumons (crépitants, dyspnée), le cœur droit retentit sur la circulation veineuse périphérique (foie, jugulaires, membres inférieurs).",
-        reference: "[Bariéty] p.120 ; [UNESS-Cardio] p.40",
-        tags: "insuffisance-cardiaque,signes",
+        type_question: "VRAI_FAUX",
+        room_number: 2,
+        room_type: "standard",
+        question_fr: "VRAI ou FAUX : L'onde de Pardee à l'ECG se caractérise par un sus-décalage du segment ST convexe vers le haut englobant l'onde T dans au moins deux dérivations contiguës.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Vrai ! L'onde de Pardee signe l'infarctus transmural aigu (SCA ST+).",
+        reference: "[Coustet] p.52",
+        tags: "ECG,pardee",
       },
       {
         lesson_id: lesson1_2.id,
         systeme: "cardio",
-        niveau_difficulte: 3,
-        type_question: "QCM",
-        contexte_clinique: "Lors de l'examen d'un patient en décompensation cardiaque globale :",
-        question_fr: "Que traduit une augmentation paradoxale de la turgescence jugulaire lors de l'inspiration profonde (Signe de Kussmaul) ?",
+        niveau_difficulte: 2,
+        type_question: "CAS_CLINIQUE",
+        room_number: 3,
+        room_type: "guardian",
+        contexte_clinique: "Une femme de 72 ans diabétique consulte pour un malaise avec nausées intenses et sueurs sans douleur thoracique franche.",
+        question_fr: "Pourquoi devez-vous impérativement réaliser un ECG chez cette patiente ?",
         options_json: JSON.stringify([
-          { id: "A", text: "Une gêne au remplissage du ventricule droit (tamponnade, péricardite constrictive ou infarctus VD)", is_correct: true },
-          { id: "B", text: "Une insuffisance mitrale aiguë par rupture de cordage", is_correct: false },
-          { id: "C", text: "Un rétrécissement aortique serré calcifié", is_correct: false },
-          { id: "D", text: "Une hypertension artérielle essentielle bien contrôlée", is_correct: false },
+          { id: "A", text: "Pour dépister un infarctus du myocarde indolore fréquent chez le diabétique par neuropathie autonome", is_correct: true },
+          { id: "B", text: "Pour vérifier l'absence d'ulcère gastrique", is_correct: false },
         ]),
         reponse_correcte: "A",
-        feedback_fr: "Le signe de Kussmaul veineux traduit l'incapacité des cavités droites à absorber l'augmentation inspiratoire normale du retour veineux [Bates p.310, McGee p.340].",
-        reference: "[Bates] Guide de l'examen clinique, p.310 ; [McGee] p.340",
-        tags: "kussmaul,turgescence,péricarde",
+        feedback_fr: "Chez les diabétiques, la neuropathie sensitive autonome peut rendre l'infarctus totalement indolore.",
+        reference: "[Bates] p.324",
+        tags: "diabète,infarctus_atypique",
       },
     ],
   });
 
-  // Leçon 1.3 : Palpitations, Syncopes & Lipothymies
+  // 1.3 Péricardite
   const lesson1_3 = await prisma.lesson.create({
     data: {
       module_id: module1.id,
-      slug: "palpitations-et-syncope",
-      nom_fr: "Palpitations, Syncopes & Lipothymies",
-      description_fr: "Différencier malaise vagal bénin, lipothymie, crise d'épilepsie et syncope cardiologique à haut risque.",
+      slug: "pericardite-aigue-tamponnade",
+      nom_fr: "Donjon 1.3 : Péricardite Aiguë & Tamponnade",
+      description_fr: "Frottement péricardique, soulagement en position assise penchée en avant et pouls paradoxal.",
       niveau_difficulte: 2,
       ordre_affichage: 3,
-      xp_reward: 30,
-      cours_intro_fr: "Une syncope est une perte de connaissance brève, à début rapide et récupération spontanée complète, causée par une hypoperfusion cérébrale globale transitoire.",
-      cours_detaille_fr: `### 1. Définitions & Diagnostics Différentiels Clés
-- **Syncope** : Perte de connaissance totale, brève (< 1 à 3 min), avec perte du tonus postural (chute) et retour rapide et complet à l'état de conscience antérieur sans confusion post-critique.
-- **Lipothymie** : Sensation de perte de connaissance imminente (« voile noir », faiblesse extrême) sans perte de conscience complète.
-- **Crise d'épilepsie généralisée** : Perte de connaissance plus prolongée, précédée parfois d'une aura, avec secousses cloniques synchrones, morsure du bord latéral de la langue, perte d'urines et **confusion post-critique prolongée (stertor)**.
-
-### 2. Syncope Vasovagale vs Syncope Cardiaque
-- **Malaise / Syncope Vasovagale (Bénigne)** : Sujet jeune, atmosphère confinée et chaude, station debout prolongée, douleur aiguë ou émotion. Précédée de **prodromes nets** (sueurs, nausées, pâleur, bâillements, vision trouble, acouphènes).
-- **Syncope Cardiaque / Rythmique (Grave)** : Survenue brutale **SANS prodrome (« à l'emporte-pièce »)**, survenant à l'effort ou chez un patient avec cardiopathie connue. Risque élevé de mort subite.
-- **Syndrome d'Adams-Stokes** : Syncope à l'emporte-pièce provoquée par un bloc auriculo-ventriculaire complet paroxystique avec pause ventriculaire prolongée.
-
-### 3. Les 5 S de la Syncope Cardiaque Grave
-- **S - Soudaine** : Chute instantanée sans prodrome.
-- **S - Sans prodrome** : Absence de sueurs ou de nausées préalables.
-- **S - Survenue à l'effort** : Évoque un rétrécissement aortique serré ou une cardiomyopathie hypertrophique (CMH).
-- **S - Sujet cardiologique** : Antécédent d'infarctus, d'insuffisance cardiaque ou souffle connu.
-- **S - Sommation ECG anormale** : Présence d'un bloc de branche, d'un intervalle PR allongé, d'un QT long ou d'un syndrome de Brugada.`,
-      cours_points_cles_fr: `- Syncope = Perte de connaissance brève avec retour spontané complet sans confusion.
-- Sans prodrome (« chute brutale ») ou survenant à l'effort = Syncope d'origine cardiaque suspecte jusqu'à preuve du contraire.
-- Tout premier épisode de syncope impose un **ECG 12 dérivations systématique immédiat**.
-- Morsure latérale de langue + confusion prolongée = Épilepsie (et non syncope).`,
-      pieges_cliniques_fr: `⚠️ **Piège classique** : Une syncope prolongée (> 15 secondes) avec anoxie cérébrale peut s'accompagner de quelques secousses cloniques (myoclonies d'anoxie) : ne pas la confondre à tort avec une crise d'épilepsie !`,
-      mnemonique: "5 S de la Syncope cardiaque : Soudaine, Sans prodrome, Survenue à l'effort, Sujet cardiologique, Sommation ECG anormale.",
-      carte_mentale_json: JSON.stringify({
-        title: "Orientation devant une Perte de Connaissance Brève",
-        nodes: [
-          {
-            label: "Perte de Connaissance Brève",
-            children: [
-              {
-                label: "Syncope Vagal (Bénigne)",
-                children: [
-                  { label: "Prodromes : Sueurs, pâleur, nausées, bâillements" },
-                  { label: "Facteurs : Chaleur, émotion, station debout" },
-                ],
-              },
-              {
-                label: "Syncope Cardiaque (Urgence)",
-                children: [
-                  { label: "À l'emporte-pièce, SANS prodrome" },
-                  { label: "Survenue à l'effort (Rétrécissement aortique, CMH)" },
-                  { label: "ECG anormal (Troubles conductifs BAV, QT long, Brugada)" },
-                ],
-              },
-            ],
-          },
-        ],
-      }),
+      xp_reward: 35,
+      gems_reward: 12,
+      dungeon_type: "standard",
+      boss_name: "Chevalier Péricardique",
+      rooms_count: 3,
+      cours_intro_fr: "La péricardite aiguë donne une douleur augmentée en décubitus et soulagée en position assise penchée en avant avec frottement systolo-diastolique.",
+      cours_points_cles_fr: "• Frottement péricardique : râpeux de cuir neuf, persistant en apnée.\n• Triade de Beck (Tamponnade) : Hypotension + Bruits assourdis + Turgescence jugulaire.",
+      mnemonique: "Péricardite = Position assise penchée en avant !",
     },
   });
 
-  // Cartes Leçon 1.3
   await prisma.card.createMany({
     data: [
       {
@@ -656,515 +386,699 @@ D'après les traités de sémiologie médicale (*Coustet p.48, Bariéty p.110*) 
         systeme: "cardio",
         niveau_difficulte: 2,
         type_question: "QCM",
-        contexte_clinique: "Un homme de 72 ans fait une chute brutale sans aucun signe précurseur alors qu'il marchait dans sa cuisine. Il reprend conscience instantanément.",
-        question_fr: "Quelle caractéristique doit faire suspecter une syncope d'origine cardiaque grave plutôt qu'un malaise vagal ?",
+        room_number: 1,
+        room_type: "standard",
+        question_fr: "Quelle position antalgique caractéristique soulage typiquement la douleur de péricardite aiguë ?",
         options_json: JSON.stringify([
-          { id: "A", text: "L'absence totale de prodromes (« syncope à l'emporte-pièce »)", is_correct: true },
-          { id: "B", text: "La présence de nausées et de sueurs avant la chute", is_correct: false },
-          { id: "C", text: "La survenue dans une pièce très chauffée", is_correct: false },
-          { id: "D", text: "L'âge jeune du patient", is_correct: false },
+          { id: "A", text: "La position assise penchée en avant", is_correct: true },
+          { id: "B", text: "Le décubitus dorsal strict", is_correct: false },
         ]),
         reponse_correcte: "A",
-        feedback_fr: "La survenue brutale sans aucun signe prémonitoire chez un patient âgé est très suspecte d'un trouble conductif paroxystique (BAV de haut degré / Adams-Stokes) ou d'un trouble du rythme ventriculaire.",
-        mnemonique_rappel: "Syncope cardiaque : Soudaine, Sans prodrome -> Hospitalisation et ECG !",
-        reference: "[Coustet] p.54 ; [Bariéty] p.135",
-        tags: "syncope,malaise,cardio",
+        feedback_fr: "La position assise penchée en avant diminue la pression de contact entre les feuillets péricardiques enflammés.",
+        reference: "[Coustet] p.64",
+        tags: "péricardite,position",
       },
       {
         lesson_id: lesson1_3.id,
         systeme: "cardio",
-        niveau_difficulte: 1,
+        niveau_difficulte: 2,
         type_question: "VRAI_FAUX",
-        question_fr: "La réalisation d'un ECG 12 dérivations est systématique et obligatoire devant tout premier épisode de syncope.",
+        room_number: 2,
+        room_type: "standard",
+        question_fr: "VRAI ou FAUX : Le frottement péricardique persiste lors du blocage respiratoire en apnée, ce qui le distingue du frottement pleural.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Vrai ! Le frottement péricardique est indépendant des mouvements respiratoires.",
+        reference: "[McGee] p.360",
+        tags: "frottement",
+      },
+      {
+        lesson_id: lesson1_3.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "CAS_CLINIQUE",
+        room_number: 3,
+        room_type: "guardian",
+        contexte_clinique: "Un patient suivi pour péricardite présente une tension à 85/55 mmHg, des veines jugulaires turgescentes et des bruits du cœur assourdis.",
+        question_fr: "Quel tableau d'extrême urgence vitale devez-vous diagnostiquer sans délai ?",
         options_json: JSON.stringify([
-          { id: "true", text: "Vrai", is_correct: true },
-          { id: "false", text: "Faux", is_correct: false },
+          { id: "A", text: "Une tamponnade cardiaque compressive (Triade de Beck)", is_correct: true },
+          { id: "B", text: "Une simple rémission de la péricardite", is_correct: false },
         ]),
-        reponse_correcte: "true",
-        feedback_fr: "Vrai. L'ECG est l'examen pivot indispensable pour rechercher un trouble de conduction, un syndrome du QT long, un syndrome de Brugada ou des signes d'ischémie.",
-        reference: "[UNESS-Cardio] p.52 ; [Coustet] p.54",
-        tags: "ECG,syncope,recommandations",
+        reponse_correcte: "A",
+        feedback_fr: "Hypotension + turgescence jugulaire + assourdissement = Triade de Beck de la tamponnade péricardique.",
+        reference: "[Bariéty] p.122",
+        tags: "tamponnade,beck",
       },
     ],
   });
 
-  // ==========================================
-  // MODULE 2 : EXAMEN CLINIQUE CARDIOVASCULAIRE
-  // ==========================================
-  console.log("📦 Module 2 : Examen clinique approfondi...");
+  // 1.4 Dissection
+  const lesson1_4 = await prisma.lesson.create({
+    data: {
+      module_id: module1.id,
+      slug: "dissection-aortique-pied",
+      nom_fr: "Donjon 1.4 : Dissection Aortique & Pièges PIED",
+      description_fr: "Douleur déchirante d'emblée maximale, irradiation dorsale et asymétrie tensionnelle > 20 mmHg.",
+      niveau_difficulte: 2,
+      ordre_affichage: 4,
+      xp_reward: 35,
+      gems_reward: 12,
+      dungeon_type: "standard",
+      boss_name: "Gardien de l'Aorte Déchirée",
+      rooms_count: 3,
+      cours_intro_fr: "La dissection aortique est la déchirure de l'intima créant un faux chenal. Elle survient typiquement sur terrain d'HTA sévère.",
+      cours_points_cles_fr: "• Douleur d'emblée maximale, déchirante, dorsale descendante.\n• Asymétrie de pression artérielle > 20 mmHg.\n• Abolition d'un pouls périphérique.",
+      mnemonique: "PIED : Péricardite, Infarctus, Embolie, Dissection aortique.",
+    },
+  });
+
+  await prisma.card.createMany({
+    data: [
+      {
+        lesson_id: lesson1_4.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "QCM",
+        room_number: 1,
+        room_type: "standard",
+        question_fr: "Quel signe physique doit être immédiatement recherché aux deux bras devant une suspicion de dissection aortique ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Une asymétrie de pression artérielle systolique supérieure à 20 mmHg", is_correct: true },
+          { id: "B", text: "Un signe de Homans bilatéral", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "L'asymétrie tensionnelle > 20 mmHg ou l'abolition d'un pouls oriente fortement vers la dissection aortique.",
+        reference: "[Coustet] p.54",
+        tags: "dissection,asymétrie",
+      },
+      {
+        lesson_id: lesson1_4.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "VRAI_FAUX",
+        room_number: 2,
+        room_type: "standard",
+        question_fr: "VRAI ou FAUX : L'apparition d'un souffle diastolique d'insuffisance aortique chez un patient avec douleur thoracique brutale évoque une dissection de type A.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Vrai ! La dissection de l'aorte ascendante peut dilater l'anneau aortique ou désinsérer un cuspide.",
+        reference: "[Bariéty] p.112",
+        tags: "dissection,insuffisance_aortique",
+      },
+      {
+        lesson_id: lesson1_4.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "QCM",
+        room_number: 3,
+        room_type: "guardian",
+        question_fr: "Dans le moyen mnémotechnique PIED des 4 urgences vitales thoraciques, que signifie la lettre 'E' ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Embolie Pulmonaire", is_correct: true },
+          { id: "B", text: "Endocardite Infectieuse", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "P-I-E-D = Péricardite aiguë, Infarctus (SCA), Embolie pulmonaire, Dissection aortique.",
+        reference: "[Coustet] p.50",
+        tags: "PIED,urgences",
+      },
+    ],
+  });
+
+  // 1.5 Boss 1 : Spectre de l'Infarctus
+  const boss1 = await prisma.lesson.create({
+    data: {
+      module_id: module1.id,
+      slug: "boss-spectre-infarctus",
+      nom_fr: "👑 Boss Chapitre 1 : Le Spectre de l'Infarctus du Myocarde",
+      description_fr: "Combat en 5 salles multi-phases : Interrogatoire, ECG en miroir, extension au VD, contre-indications et angioplastie !",
+      niveau_difficulte: 3,
+      ordre_affichage: 5,
+      xp_reward: 100,
+      gems_reward: 35,
+      dungeon_type: "boss",
+      boss_name: "Spectre de l'Infarctus du Myocarde",
+      boss_avatar: "💀🔥",
+      rooms_count: 5,
+      cours_intro_fr: "Pour vaincre le Spectre de l'Infarctus, enchaîne les 5 étapes capitales de la prise en charge coronarienne d'urgence sans faillir !",
+      cours_points_cles_fr: "1. Striction > 20 min.\n2. Onde de Pardee.\n3. Extension VD (dérivations droites V3R/V4R).\n4. Contre-indication absolue des nitrés/diurétiques si atteinte du VD.\n5. Coronarographie primaire < 120 min.",
+      mnemonique: "Time is Muscle : Chaque minute compte dans le SCA !",
+    },
+  });
+
+  await prisma.card.createMany({
+    data: [
+      {
+        lesson_id: boss1.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "CAS_CLINIQUE",
+        room_number: 1,
+        room_type: "boss_phase_1",
+        contexte_clinique: "PHASE 1 - INTERROGATOIRE : Un homme de 50 ans fumeur présente une striction médiothoracique avec sueurs depuis 40 minutes.",
+        question_fr: "Quel élément affirme qu'il s'agit d'un SCA plutôt que d'un angor stable ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "La durée supérieure à 20 minutes et la résistance aux dérivés nitrés", is_correct: true },
+          { id: "B", text: "La présence de palpitations isolées", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Frappe réussie ! Une douleur constrictive > 20 min résistante aux nitrés définit le SCA.",
+        reference: "[UNESS-Cardio] p.14",
+        tags: "boss1,phase1",
+      },
+      {
+        lesson_id: boss1.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "QCM",
+        room_number: 2,
+        room_type: "boss_phase_2",
+        contexte_clinique: "PHASE 2 - ECG : Sus-décalage ST en DII, DIII, aVF avec image en miroir en DI, aVL.",
+        question_fr: "Dans quel territoire coronarien se situe l'infarctus transmural ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Territoire inférieur (artère coronaire droite)", is_correct: true },
+          { id: "B", text: "Territoire antérieur étendu (artère IVA)", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Coup critique ! DII, DIII, aVF explorent la paroi inférieure du VG.",
+        reference: "[Coustet] p.52",
+        tags: "boss1,phase2",
+      },
+      {
+        lesson_id: boss1.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "CAS_CLINIQUE",
+        room_number: 3,
+        room_type: "boss_phase_3",
+        contexte_clinique: "PHASE 3 - EXTENSION : Le patient présente une tension à 80/50 mmHg, une turgescence jugulaire et des poumons clairs.",
+        question_fr: "Quelle complication coronarienne devez-vous immédiatement explorer par V3R/V4R ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Une extension de l'infarctus au ventricule droit (VD)", is_correct: true },
+          { id: "B", text: "Une embolie gazeuse massive", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Magistral ! Hypotension + turgescence jugulaire + poumons clairs dans l'infarctus inférieur signe l'atteinte du VD.",
+        reference: "[Bariéty] p.116",
+        tags: "boss1,phase3",
+      },
+      {
+        lesson_id: boss1.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "VRAI_FAUX",
+        room_number: 4,
+        room_type: "boss_phase_4",
+        contexte_clinique: "PHASE 4 - CONTRE-INDICATION : Devant cet infarctus étendu au ventricule droit :",
+        question_fr: "VRAI ou FAUX : L'administration de dérivés nitrés ou de diurétiques est formellement contre-indiquée car elle entraîne un collapsus fatal.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Parfait ! Le VD dépend de la précharge : les nitrés provoquent un effondrement tensionnel sévère.",
+        reference: "[UNESS-Cardio] p.20",
+        tags: "boss1,phase4",
+      },
+      {
+        lesson_id: boss1.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "QCM",
+        room_number: 5,
+        room_type: "boss_phase_5",
+        contexte_clinique: "PHASE 5 - RECOLONISATION : Le patient est pris en charge par le SMUR à H+1 du début de l'infarctus.",
+        question_fr: "Quelle est la stratégie thérapeutique de choix en urgence ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Angioplastie coronaire primaire en salle de cathétérisme dans un délai < 120 minutes", is_correct: true },
+          { id: "B", text: "Surveillance simple sans geste invasif", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "VICTOIRE TOTALE ! L'angioplastie coronaire primaire d'urgence est le traitement de référence absolue du SCA ST+.",
+        reference: "[ESC Guidelines STEMI]",
+        tags: "boss1,phase5",
+      },
+    ],
+  });
+
+  // =========================================================================
+  // CHAPITRE 2 : INSUFFISANCE CARDIAQUE & CONGESTION
+  // =========================================================================
+  console.log("🌊 Chapitre 2 : Insuffisance Cardiaque & Congestion...");
   const module2 = await prisma.module.create({
     data: {
-      slug: "cardio-examen-clinique",
-      nom_fr: "Examen clinique cardiovasculaire",
-      nom_en: "Cardiovascular Physical Examination",
-      description_fr: "Maîtriser les 4 temps de l'examen : inspection, palpation des pouls, pression artérielle et auscultation.",
+      slug: "chapitre-2-insuffisance-cardiaque",
+      nom_fr: "Chapitre 2 : Insuffisance Cardiaque & Congestion",
+      description_fr: "Maîtriser l'orthopnée, la turgescence jugulaire, les crépitants d'OAP et vaincre le Léviathan Congestif.",
       systeme: "cardio",
       ordre_affichage: 2,
+      icone: "Activity",
+      color: "cyan",
+    },
+  });
+
+  // 2.1 IVG & Orthopnée
+  const lesson2_1 = await prisma.lesson.create({
+    data: {
+      module_id: module2.id,
+      slug: "insuffisance-ventriculaire-gauche-orthopnee",
+      nom_fr: "Donjon 2.1 : Insuffisance Ventriculaire Gauche & Orthopnée",
+      description_fr: "Classification NYHA, dyspnée paroxystique nocturne (DPN) et râles crépitants pulmonaires.",
+      niveau_difficulte: 1,
+      ordre_affichage: 1,
+      xp_reward: 30,
+      gems_reward: 10,
+      dungeon_type: "standard",
+      boss_name: "Sentinelle de l'Orthopnée",
+      rooms_count: 3,
+      cours_intro_fr: "L'insuffisance ventriculaire gauche entraîne une élévation des pressions capillaires pulmonaires, responsable d'orthopnée et de râles crépitants aux bases.",
+      cours_points_cles_fr: "• Orthopnée : gêne respiratoire en position couchée imposant de surélever la tête avec des oreillers.\n• Râles crépitants fins de fin d'inspiration aux bases pulmonaires.\n• Galop B3 protodiastolique.",
+      mnemonique: "NYHA 1 à 4 : Du grand effort au repos absolu !",
+    },
+  });
+
+  await prisma.card.createMany({
+    data: [
+      {
+        lesson_id: lesson2_1.id,
+        systeme: "cardio",
+        niveau_difficulte: 1,
+        type_question: "QCM",
+        room_number: 1,
+        room_type: "standard",
+        question_fr: "Comment se définit sémiologiquement l'orthopnée chez un patient insuffisant cardiaque ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Une dyspnée survenant en position couchée et soulagée par le passage en position assise", is_correct: true },
+          { id: "B", text: "Une dyspnée survenant uniquement en position debout", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "L'orthopnée est la dyspnée de décubitus, due à la redistribution de la masse sanguine vers le thorax augmentant la pression capillaire pulmonaire.",
+        reference: "[Coustet] p.56",
+        tags: "orthopnée,IVG",
+      },
+      {
+        lesson_id: lesson2_1.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "VRAI_FAUX",
+        room_number: 2,
+        room_type: "standard",
+        question_fr: "VRAI ou FAUX : Selon la classification NYHA, le stade III correspond à une limitation marquée lors des activités légères de la vie quotidienne (marche sur 100m à plat).",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Vrai ! Stade I = efforts intenses ; Stade II = efforts modérés ; Stade III = efforts légers de la vie quotidienne ; Stade IV = repos.",
+        reference: "[UNESS-Cardio] p.28",
+        tags: "NYHA,stades",
+      },
+      {
+        lesson_id: lesson2_1.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "CAS_CLINIQUE",
+        room_number: 3,
+        room_type: "guardian",
+        contexte_clinique: "À l'auscultation pulmonaire d'un patient essoufflé, vous entendez des bruits fins crépitants, comparables au bruit de pas dans la neige fraîche ou au froissement de cheveux, prédominant aux deux bases.",
+        question_fr: "Quel signe stéthacoustique pathognomonique de stase capillaire pulmonaire identifiez-vous ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Des râles crépitants de fin d'inspiration", is_correct: true },
+          { id: "B", text: "Des râles sibilants expiratoires", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Les râles crépitants télé-inspiratoires bilatéraux traduisent l'inondation alvéolaire par transsudation séreuse (stase pulmonaire gauche).",
+        reference: "[Bariéty] p.126",
+        tags: "crépitants,auscultation",
+      },
+    ],
+  });
+
+  // 2.2 IVD & Harzer
+  const lesson2_2 = await prisma.lesson.create({
+    data: {
+      module_id: module2.id,
+      slug: "insuffisance-cardiaque-droite-harzer",
+      nom_fr: "Donjon 2.2 : Insuffisance Cardiaque Droite & Signe de Harzer",
+      description_fr: "Turgescence jugulaire, reflux hépato-jugulaire (RHJ) et œdèmes des membres inférieurs prenant le godet.",
+      niveau_difficulte: 2,
+      ordre_affichage: 2,
+      xp_reward: 35,
+      gems_reward: 12,
+      dungeon_type: "standard",
+      boss_name: "Golem Congestif Périphérique",
+      rooms_count: 3,
+      cours_intro_fr: "L'insuffisance cardiaque droite se manifeste par une congestion veineuse systémique : turgescence des jugulaires, gros foie douloureux de stase et œdèmes des membres inférieurs.",
+      cours_points_cles_fr: "• Signe de Harzer : perception des battements du VD sous la xiphoïde en inspiration.\n• Reflux hépato-jugulaire (RHJ) : turgescence jugulaire durable lors de la compression hépatique.\n• Œdèmes des membres inférieurs : bilatéraux, blancs, mous, indolores, prenant le godet.",
+      mnemonique: "IVD = Veines, Foie, Jambes (Godet) !",
+    },
+  });
+
+  await prisma.card.createMany({
+    data: [
+      {
+        lesson_id: lesson2_2.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "QCM",
+        room_number: 1,
+        room_type: "standard",
+        question_fr: "Comment réalise-t-on la recherche du signe de Harzer en sémiologie cardiaque ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Par palpation sous l'appendice xiphoïde en faisant inspirer profondément le patient pour sentir les battements du ventricule droit", is_correct: true },
+          { id: "B", text: "Par percussion de la fosse iliaque droite", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Le signe de Harzer consiste à glisser le pouce ou les doigts sous la xiphoïde vers le haut et la gauche lors d'une inspiration profonde pour percevoir le soulèvement du ventricule droit dilaté.",
+        reference: "[Coustet] p.58",
+        tags: "harzer,IVD",
+      },
+      {
+        lesson_id: lesson2_2.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "VRAI_FAUX",
+        room_number: 2,
+        room_type: "standard",
+        question_fr: "VRAI ou FAUX : Le reflux hépato-jugulaire est considéré comme positif lorsque la compression douce et prolongée du foie majore la turgescence jugulaire de manière soutenue pendant plus de 3 secondes.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Vrai ! Le RHJ positif traduit l'incapacité du ventricule droit à absorber un surcroît de retour veineux [Bariéty p.122].",
+        reference: "[Bariéty] p.122",
+        tags: "RHJ,stase",
+      },
+      {
+        lesson_id: lesson2_2.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "CAS_CLINIQUE",
+        room_number: 3,
+        room_type: "guardian",
+        contexte_clinique: "Un patient insuffisant cardiaque présente un gonflement bilatéral des deux chevilles. Lorsque vous appuyez votre pouce sur la crête tibiale pendant quelques secondes, une empreinte en creux persiste après le retrait du doigt.",
+        question_fr: "Quel est le nom de ce signe clinique caractéristique d'œdème interstitiel d'hypertension veineuse ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Le signe du godet", is_correct: true },
+          { id: "B", text: "Le signe de Trousseau", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Le signe du godet positif signe l'accumulation liquidienne interstitielle déclive liée à l'augmentation de la pression hydrostatique capillaire.",
+        reference: "[Bates] p.318",
+        tags: "godet,œdèmes",
+      },
+    ],
+  });
+
+  // 2.3 OAP
+  const lesson2_3 = await prisma.lesson.create({
+    data: {
+      module_id: module2.id,
+      slug: "oedeme-aigu-du-poumon-oap",
+      nom_fr: "Donjon 2.3 : Œdème Aigu du Poumon (OAP)",
+      description_fr: "Polypnée asphyxique, grésillement laryngé, crépitants en marée montante et expectoration saumonée.",
+      niveau_difficulte: 2,
+      ordre_affichage: 3,
+      xp_reward: 35,
+      gems_reward: 12,
+      dungeon_type: "standard",
+      boss_name: "Spectre de l'Asphyxie Congestive",
+      rooms_count: 3,
+      cours_intro_fr: "L'OAP est l'inondation brutale des alvéoles par franchissement de la pression oncotique plasmatique (> 25 mmHg de pression capillaire). C'est une détresse respiratoire aiguë vitale.",
+      cours_points_cles_fr: "• Polypnée superficielle angoissante avec grésillement laryngé audible à distance.\n• Crépitants bilatéraux en marée montante (des bases vers les sommets).\n• Expectoration mousseuse blanche ou saumonée.",
+      mnemonique: "OAP = Urgence : Position assise + Furosémide IV + Dérivés nitrés + O2 !",
+    },
+  });
+
+  await prisma.card.createMany({
+    data: [
+      {
+        lesson_id: lesson2_3.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "QCM",
+        room_number: 1,
+        room_type: "standard",
+        contexte_clinique: "Un patient de 68 ans est assis au bord de son lit, suffocant, couvert de sueurs, avec une respiration bruyante à type de grésillement laryngé.",
+        question_fr: "Quelle caractéristique d'auscultation pulmonaire signe la gravité immédiate d'un OAP hémodynamique ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "L'ascension des râles crépitants « en marée montante » atteignant les tiers moyens et supérieurs des champs pulmonaires", is_correct: true },
+          { id: "B", text: "La présence d'un murmure vésiculaire parfaitement pur", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Les crépitants en marée montante témoignent de l'extension de l'inondation alvéolaire vers les apex pulmonaires.",
+        reference: "[Coustet] p.60",
+        tags: "OAP,crépitants_marée_montante",
+      },
+      {
+        lesson_id: lesson2_3.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "VRAI_FAUX",
+        room_number: 2,
+        room_type: "standard",
+        question_fr: "VRAI ou FAUX : L'expectoration typique de l'œdème aigu du poumon hémodynamique est mousseuse, aérée et rosée/saumonée.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Vrai ! L'expectoration rosée saumonée résulte du mélange d'air, de liquide d'œdème et de quelques hématies extravasées sous haute pression capillaire.",
+        reference: "[Bariéty] p.128",
+        tags: "OAP,expectoration",
+      },
+      {
+        lesson_id: lesson2_3.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "QCM",
+        room_number: 3,
+        room_type: "guardian",
+        question_fr: "Quelle position physique devez-vous impérativement faire adopter en urgence à un patient en crise d'OAP ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Position assise jambes pendantes au bord du lit (pour diminuer le retour veineux)", is_correct: true },
+          { id: "B", text: "Position allongée sur le dos jambes surélevées (Trendelenburg)", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "La position assise jambes pendantes piège le sang veineux dans les membres inférieurs et réduit la précharge ventriculaire, allégeant le travail cardiaque.",
+        reference: "[UNESS-Cardio] p.30",
+        tags: "OAP,urgence_position",
+      },
+    ],
+  });
+
+  // 2.4 Choc Cardiogénique
+  const lesson2_4 = await prisma.lesson.create({
+    data: {
+      module_id: module2.id,
+      slug: "choc-cardiogenique-hypoperfusion",
+      nom_fr: "Donjon 2.4 : Choc Cardiogénique & Marbrures",
+      description_fr: "Hypotension artérielle sévère, marbrures aux genoux, extrémités froides et oligurie.",
+      niveau_difficulte: 3,
+      ordre_affichage: 4,
+      xp_reward: 40,
+      gems_reward: 15,
+      dungeon_type: "standard",
+      boss_name: "Gardien du Collapsus",
+      rooms_count: 3,
+      cours_intro_fr: "Le choc cardiogénique est la défaillance aiguë de la pompe cardiaque incapable d'assurer un débit suffisant aux organes nobles.",
+      cours_points_cles_fr: "• PAS < 90 mmHg ou chute > 40 mmHg.\n• Signes d'hypoperfusion périphérique : marbrures débutant aux genoux, temps de recoloration cutanée (TRC) > 3 secondes, oligurie (< 0.5 mL/kg/h), confusion.\n• Élévation des lactates plasmatiques.",
+      mnemonique: "Choc = Pression basse + Marbrures + Oligurie !",
+    },
+  });
+
+  await prisma.card.createMany({
+    data: [
+      {
+        lesson_id: lesson2_4.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "QCM",
+        room_number: 1,
+        room_type: "standard",
+        question_fr: "Où débutent typiquement les marbrures cutanées traduisant la vasoconstriction réflexe intense lors d'un état de choc cardiogénique ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Aux genoux et aux extrémités des membres inférieurs", is_correct: true },
+          { id: "B", text: "Au visage et aux paupières", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Les marbrures cutanées débutent aux rotules et progressent vers les cuisses en fonction de la sévérité du collapsus hémodynamique (Score de marbrures).",
+        reference: "[Coustet] p.62 ; [McGee] p.340",
+        tags: "choc,marbrures",
+      },
+      {
+        lesson_id: lesson2_4.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "VRAI_FAUX",
+        room_number: 2,
+        room_type: "standard",
+        question_fr: "VRAI ou FAUX : Un Temps de Recoloration Cutanée (TRC) supérieur à 3 secondes après pression digitale sur l'ongle ou la pulpe est un signe physique fiable d'hypoperfusion tissulaire.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Vrai ! Le TRC allongé (> 3 sec) témoigne d'une microcirculation compromise dans l'état de choc.",
+        reference: "[McGee Evidence-Based Physical Diagnosis] p.342",
+        tags: "TRC,choc",
+      },
+      {
+        lesson_id: lesson2_4.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "QCM",
+        room_number: 3,
+        room_type: "guardian",
+        question_fr: "Quel inotrope positif d'action bêta-1 adrénergique est la molécule de référence de première intention pour soutenir la contractilité myocardique dans le choc cardiogénique ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "La Dobutamine en perfusion continue", is_correct: true },
+          { id: "B", text: "Un bêtabloquant à forte dose", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "La dobutamine stimule les récepteurs bêta-1 cardiaques, augmentant l'inotropisme et le volume d'éjection systolique sans vasoconstriction excessive.",
+        reference: "[UNESS-Cardio] p.32",
+        tags: "dobutamine,choc_cardiogénique",
+      },
+    ],
+  });
+
+  // 2.5 Boss 2 : Léviathan Congestif
+  const boss2 = await prisma.lesson.create({
+    data: {
+      module_id: module2.id,
+      slug: "boss-leviathan-congestif",
+      nom_fr: "👑 Boss Chapitre 2 : Le Léviathan Congestif des Marais",
+      description_fr: "Combat en 5 salles multi-phases : Évaluation de la surcharge globale, différentiation droite/gauche, traitement diurétique et sauvetage inotrope !",
+      niveau_difficulte: 3,
+      ordre_affichage: 5,
+      xp_reward: 120,
+      gems_reward: 40,
+      dungeon_type: "boss",
+      boss_name: "Léviathan Congestif des Marais",
+      boss_avatar: "🌊🫀",
+      rooms_count: 5,
+      cours_intro_fr: "Le Léviathan submerge les poumons et les veines de fluide stasique. Terrasse ses 5 assauts en purifiant la congestion cardiaque !",
+      cours_points_cles_fr: "1. Distinguer la stase pulmonaire (IVG) et veineuse périphérique (IVD).\n2. Gérer l'OAP asphyxique.\n3. Adapter les diurétiques de l'anse.\n4. Traiter le choc cardiogénique.",
+      mnemonique: "Drainer la stase, soutenir la pompe, purifier Aethelgard !",
+    },
+  });
+
+  await prisma.card.createMany({
+    data: [
+      {
+        lesson_id: boss2.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "CAS_CLINIQUE",
+        room_number: 1,
+        room_type: "boss_phase_1",
+        contexte_clinique: "PHASE 1 - DÉTECTION DU FLUX : Le Léviathan présente un patient essoufflé ayant pris 4 kg en 5 jours avec gros œdèmes prenant le godet et turgescence jugulaire.",
+        question_fr: "Quel diagnostic syndromique global devez-vous poser ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Une poussée d'insuffisance cardiaque globale congestive en rétention hydrosodée", is_correct: true },
+          { id: "B", text: "Une déshydratation extracellulaire sévère", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Frappe réussie ! Prise de poids rapide + œdèmes + turgescence jugulaire = Décompensation cardiaque congestive globale.",
+        reference: "[Coustet] p.56",
+        tags: "boss2,phase1",
+      },
+      {
+        lesson_id: boss2.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "QCM",
+        room_number: 2,
+        room_type: "boss_phase_2",
+        contexte_clinique: "PHASE 2 - AUSCULTATION CARDIAQUE : À l'apex en décubitus latéral gauche, vous percevez un bruit sourd surajouté en début de diastole (« Toum-Ta-Da »).",
+        question_fr: "Quel est ce bruit de galop caractéristique d'une dysfonction systolique ventriculaire gauche sévère ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Le galop protodiastolique B3", is_correct: true },
+          { id: "B", text: "Le clic d'éjection protosystolique", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Coup critique ! Le B3 de galop résulte de la décélération brutale du flux sanguin entrant dans un ventricule gauche dilaté et peu compliant.",
+        reference: "[McGee] p.350",
+        tags: "boss2,phase2",
+      },
+      {
+        lesson_id: boss2.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "CAS_CLINIQUE",
+        room_number: 3,
+        room_type: "boss_phase_3",
+        contexte_clinique: "PHASE 3 - CRISE D'OAP : Le patient décompense brutalement avec saturation à 78 % et crépitants jusqu'aux sommets.",
+        question_fr: "Quelle association médicamenteuse injectable d'urgence devez-vous administrer sans délai ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Furosémide IV forte dose + Dérivés nitrés IV (si PAS > 110 mmHg) + Oxygénothérapie", is_correct: true },
+          { id: "B", text: "Remplissage vasculaire massif par 2L de sérum physiologique", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Magistral ! Le furosémide draine la surcharge par diurèse et vasodilatation veineuse, tandis que les nitrés réduisent puissamment la précharge.",
+        reference: "[UNESS-Cardio] p.30",
+        tags: "boss2,phase3",
+      },
+      {
+        lesson_id: boss2.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "VRAI_FAUX",
+        room_number: 4,
+        room_type: "boss_phase_4",
+        contexte_clinique: "PHASE 4 - SURVEILLANCE BIOLOGIQUE : Sous traitement diurétique intensif :",
+        question_fr: "VRAI ou FAUX : Il est indispensable de surveiller quotidiennement la fonction rénale (créatininémie) et le ionogramme sanguin à la recherche d'une hypokaliémie induite par le furosémide.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Parfait ! Les diurétiques de l'anse augmentent la kaliurèse et peuvent provoquer une hypokaliémie arythmogène redoutable.",
+        reference: "[Coustet] p.62",
+        tags: "boss2,phase4",
+      },
+      {
+        lesson_id: boss2.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "QCM",
+        room_number: 5,
+        room_type: "boss_phase_5",
+        contexte_clinique: "PHASE 5 - CHOC TERMINAL : La tension s'effondre à 75/40 mmHg avec marbrures et lactates à 4.5 mmol/L.",
+        question_fr: "Quelle thérapeutique inotrope d'urgence permet de terrasser le Léviathan ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Introduction immédiate de Dobutamine IV au pousse-seringue électrique", is_correct: true },
+          { id: "B", text: "Prescription d'un bêtabloquant per os", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "VICTOIRE TOTALE ! La dobutamine restaure le débit cardiaque et la perfusion tissulaire, terrassant le Léviathan Congestif !",
+        reference: "[UNESS-Cardio] p.32",
+        tags: "boss2,phase5",
+      },
+    ],
+  });
+
+  // =========================================================================
+  // CHAPITRE 3 : AUSCULTATION CARDIAQUE & VALVULOPATHIES
+  // =========================================================================
+  console.log("🩺 Chapitre 3 : Auscultation Cardiaque & Valvulopathies...");
+  const module3 = await prisma.module.create({
+    data: {
+      slug: "chapitre-3-auscultation-valvulopathies",
+      nom_fr: "Chapitre 3 : Auscultation Cardiaque & Valvulopathies",
+      description_fr: "Discerner les 4 foyers, les souffles systoliques et diastoliques, et vaincre la Gargouille Valvulaire.",
+      systeme: "cardio",
+      ordre_affichage: 3,
       icone: "Stethoscope",
       color: "emerald",
     },
   });
 
-  // Leçon 2.1 : Organisation & Palpation
-  const lesson2_1 = await prisma.lesson.create({
-    data: {
-      module_id: module2.id,
-      slug: "organisation-inspection-palpation",
-      nom_fr: "Organisation & Palpation des pouls",
-      description_fr: "Recherche du choc de pointe, examen des pouls périphériques, tension artérielle bilatérale et manœuvres.",
-      niveau_difficulte: 1,
-      ordre_affichage: 1,
-      xp_reward: 25,
-      cours_intro_fr: "L'examen cardiovasculaire physique est méthodique, bilatéral et comparatif. Il associe la prise de la pression artérielle aux deux bras, la palpation de l'ensemble des trajets artériels et la recherche de signes droits et gauches.",
-      cours_detaille_fr: `### 1. Les 4 Temps de l'Examen Physique Cardiovasculaire
-1. **Inspection générale** : Cyanose centrale (hypoxémie) vs périphérique, hippocratisme digital (ongles bombés en verre de montre), dépôts lipidiques cutanés (xanthélasmas aux paupières, arc cornéen / gérontoxon précoce).
-2. **Palpation des pouls périphériques (bilatérale et comparative)** :
-   - **Membres supérieurs** : Carotides (en dedans du SCOM, jamais comprimées simultanément), brachiaux, radiaux (gouttière radiale), cubitaux.
-   - **Membres inférieurs** : Fémoraux (triangle de Scarpa / pli de l'aine), poplités (creux poplité genou fléchi), tibiaux postérieurs (en arrière de la malléole interne), pédieux (dos du pied).
-3. **Anomalies du profil de l'onde pulsatile (*Jules Constant p.45, McGee p.350*)** :
-   - **Pouls bondissant de Corrigan (celer et altus)** : Montée rapide et effondrement télédiastolique caractéristique de l'insuffisance aortique.
-   - **Pouls parvus et tardus (petit et lent)** : Diminution de l'amplitude et retard de l'acmé dans le rétrécissement aortique serré.
-   - **Pouls alternant** : Alternance d'un battement fort et d'un battement faible à rythme régulier (signe de faillite ventriculaire gauche sévère).
-   - **Pouls paradoxal de Kussmaul** : Baisse de PAS > 10 mmHg à l'inspiration (tamponnade péricardique).
-4. **Palpation précordiale** :
-   - **Choc de pointe** : Palpé à l'apex (5e espace intercostal gauche, ligne médioclaviculaire). Dévié en bas et à gauche si cardiomégalie. Choc en dôme de Bard (soulèvement large et hyperdynamique) dans l'insuffisance aortique.
-   - **Signe de Harzer** : Perception anormale des battements du VD sous l'appendice xiphoïde en inspiration.
-   - **Frémissement cataire (thrill)** : Sensation tactile de vibration équivalente à un souffle cardiaque intense (>= 4/6).`,
-      cours_points_cles_fr: `- Toujours palper les pouls de façon bilatérale et symétrique de haut en bas.
-- L'abolition ou la diminution des pouls fémoraux chez l'adulte jeune évoque une coarctation aortique ; chez le sujet âgé, une artériopathie (AOMI).
-- La pression artérielle se mesure aux deux bras au repos : une asymétrie > 20 mmHg est pathologique (dissection aortique, sténose sous-clavière).
-- Pouls bondissant = Insuffisance aortique / Pouls lent et diminué = Rétrécissement aortique.`,
-      pieges_cliniques_fr: `⚠️ **Règle absolue** : Ne jamais palper les deux artères carotides en même temps sous peine de déclencher une syncope vagale ou un arrêt cardiaque réflexe !`,
-      mnemonique: "Pouls périphériques de haut en bas : Carotidien -> Brachial -> Radial -> Fémoral -> Poplité -> Tibial Postérieur -> Pédieux.",
-      carte_mentale_json: JSON.stringify({
-        title: "Organisation de l'Examen Physique Cardiovasculaire",
-        nodes: [
-          {
-            label: "Examen Cardiovasculaire",
-            children: [
-              { label: "1. Inspection : Cyanose, hippocratisme, xanthélasmas, turgescence" },
-              { label: "2. Palpation : Pouls bilatéraux + Profils (Corrigan, Parvus) + Choc de pointe + Harzer" },
-              { label: "3. Pression Artérielle : Aux deux bras (asymétrie < 10 mmHg) + Orthostatisme" },
-              { label: "4. Auscultation : 4 foyers APTM + Manœuvres dynamiques" },
-            ],
-          },
-        ],
-      }),
-    },
-  });
-
-  // Cartes Leçon 2.1
-  await prisma.card.createMany({
-    data: [
-      {
-        lesson_id: lesson2_1.id,
-        systeme: "cardio",
-        niveau_difficulte: 1,
-        type_question: "ORDRE",
-        question_fr: "Remettez dans l'ordre chronologique les trajets de palpation des pouls de haut en bas :",
-        options_json: JSON.stringify({
-          items: [
-            "Pouls carotidien",
-            "Pouls radial",
-            "Pouls fémoral",
-            "Pouls poplité",
-            "Pouls tibial postérieur et pédieux",
-          ],
-        }),
-        reponse_correcte: JSON.stringify([
-          "Pouls carotidien",
-          "Pouls radial",
-          "Pouls fémoral",
-          "Pouls poplité",
-          "Pouls tibial postérieur et pédieux",
-        ]),
-        feedback_fr: "La palpation méthodique s'effectue de haut en bas, toujours de manière bilatérale et comparative.",
-        reference: "[Coustet] Sémiologie médicale, p.56 ; [Bariéty] p.124",
-        tags: "pouls,examen-physique",
-      },
-      {
-        lesson_id: lesson2_1.id,
-        systeme: "cardio",
-        niveau_difficulte: 2,
-        type_question: "QCM",
-        question_fr: "Que traduit la perception d'un choc de pointe cardiaque dévié en bas et à gauche au 6ème espace intercostal sur la ligne axillaire antérieure ?",
-        options_json: JSON.stringify([
-          { id: "A", text: "Une dilatation et hypertrophie du ventricule gauche (cardiomégalie)", is_correct: true },
-          { id: "B", text: "Une insuffisance respiratoire restrictive", is_correct: false },
-          { id: "C", text: "Une tamponnade péricardique avec épanchement abondant", is_correct: false },
-          { id: "D", text: "Une hypertension artérielle pulmonaire isolée", is_correct: false },
-        ]),
-        reponse_correcte: "A",
-        feedback_fr: "Le déplacement du choc de pointe en bas et à gauche est le signe clinique direct d'une cardiomégalie avec dilatation ventriculaire gauche.",
-        reference: "[Bariéty] p.124 ; [Talley & O'Connor] p.58",
-        tags: "choc-de-pointe,cardiomégalie",
-      },
-      {
-        lesson_id: lesson2_1.id,
-        systeme: "cardio",
-        niveau_difficulte: 3,
-        type_question: "ASSOCIATION",
-        question_fr: "Associez chaque profil de pouls artériel à sa cardiopathie d'origine :",
-        options_json: JSON.stringify({
-          pairs: [
-            { item: "Pouls bondissant de Corrigan (celer et altus)", match: "Insuffisance aortique volumineuse" },
-            { item: "Pouls petit et lent (parvus et tardus)", match: "Rétrécissement aortique serré" },
-            { item: "Pouls paradoxal de Kussmaul (baisse PAS > 10 mmHg)", match: "Tamponnade péricardique compressive" },
-            { item: "Pouls alternant (battement fort puis faible)", match: "Insuffisance ventriculaire gauche sévère" },
-          ],
-        }),
-        reponse_correcte: JSON.stringify({
-          "Pouls bondissant de Corrigan (celer et altus)": "Insuffisance aortique volumineuse",
-          "Pouls petit et lent (parvus et tardus)": "Rétrécissement aortique serré",
-          "Pouls paradoxal de Kussmaul (baisse PAS > 10 mmHg)": "Tamponnade péricardique compressive",
-          "Pouls alternant (battement fort puis faible)": "Insuffisance ventriculaire gauche sévère",
-        }),
-        feedback_fr: "L'analyse palpatoire de la morphologie du pouls apporte des renseignements hémodynamiques essentiels [Jules Constant p.45, McGee p.350].",
-        reference: "[Jules Constant] Essentials of Bedside Cardiology, p.45 ; [McGee] p.350",
-        tags: "pouls,hémodynamique,auscultation",
-      },
-    ],
-  });
-
-  // Leçon 2.2 : Foyers d'Auscultation & Bruits fondamentaux
-  const lesson2_2 = await prisma.lesson.create({
-    data: {
-      module_id: module2.id,
-      slug: "foyers-auscultation-et-bruits",
-      nom_fr: "Foyers d'auscultation & Bruits B1/B2/B3/B4",
-      description_fr: "Repères anatomiques des 4 foyers APTM, genèse de B1/B2, dédoublements de B2 et bruits de galop.",
-      niveau_difficulte: 2,
-      ordre_affichage: 2,
-      xp_reward: 30,
-      cours_intro_fr: "L'auscultation cardiaque méthodique nécessite de positionner le stéthoscope sur 4 repères anatomiques cardinaux correspondant à la projection acoustique des valves.",
-      cours_detaille_fr: `### 1. Les 4 Foyers Cardinaux d'Auscultation (Mnémotechnique APTM)
-- **Foyer Aortique (A)** : 2e espace intercostal droit, au bord sternal droit.
-- **Foyer Pulmonaire (P)** : 2e espace intercostal gauche, au bord sternal gauche.
-- **Foyer Tricuspide (T)** : Au niveau de l'appendice xiphoïde (bas du sternum) ou 4e-5e espace bord sternal gauche.
-- **Foyer Mitral / Apex (M)** : 5e espace intercostal gauche, sur la ligne médioclaviculaire (au niveau du choc de pointe).
-- *(Foyer d'Erb / 2e foyer aortique : 3e espace intercostal gauche, idéal pour entendre le souffle diastolique d'insuffisance aortique).*
-
-### 2. Physiologie des Bruits B1 et B2
-- **B1 (« Toum »)** : Fermeture des valves atrio-ventriculaires (Mitrale M1 et Tricuspide T1). Marque le début de la **systole**. Synchrone de la pulsation carotidienne.
-- **B2 (« Ta »)** : Fermeture des valves sigmoïdes (Aortique A2 et Pulmonaire P2). Marque la fin de la systole et le début de la **diastole**.
-
-### 3. Les Dédoublements du Bruit B2 (*Jules Constant p.112, McGee p.370*)
-- **Dédoublement physiologique** : À l'inspiration profonde, l'augmentation du retour veineux retarde la fermeture de la valve pulmonaire (A2-P2 distincts). Disparaît à l'expiration.
-- **Dédoublement large et fixe** : Dédoublement constant et identique en inspiration et en expiration $\rightarrow$ **pathognomonique de la Communication Inter-Auriculaire (CIA)**.
-- **Dédoublement paradoxal (inversé)** : Le B2 est dédoublé à l'expiration et fusionne à l'inspiration (retard de fermeture de la valve aortique A2 $\rightarrow$ Rétrécissement Aortique serré ou Bloc de Branche Gauche).
-
-### 4. Bruits Surajoutés (B3, B4, Clics et Claquements)
-- **Galop B3 (protodiastolique)** : Bruit sourd de remplissage ventriculaire passif rapide $\rightarrow$ Insuffisance cardiaque avec VG dilaté.
-- **Galop B4 (télédiastolique / présystolique)** : Bruit de contraction atriale puissante contre un VG rigide $\rightarrow$ Hypertrophie VG (HTA, cardiomyopathie).
-- **Clic d'éjection protosystolique** : Bicuspidie aortique.
-- **Claquement d'ouverture mitrale (COM)** : Rétrécissement mitral (précède le roulement diastolique).`,
-      cours_points_cles_fr: `- Mnémotechnique des foyers : A-P-T-M (Aorte, Pulmonaire, Tricuspide, Mitrale).
-- B1 = Fermeture mitro-tricuspide (Début systole). B2 = Fermeture aorto-pulmonaire (Fin systole).
-- Dédoublement large et fixe de B2 = CIA.
-- Galop B3 = Défaillance systolique VG / Galop B4 = Rigidité et hypertrophie VG.`,
-      pieges_cliniques_fr: `⚠️ Toujours palper le pouls radial ou carotidien en auscultant : le bruit B1 est strictement synchrone de la montée de l'onde pulsatile !`,
-      mnemonique: "A-P-T-M : Aortique (2e Droit), Pulmonaire (2e Gauche), Tricuspide (Xiphoïde), Mitral (5e Apex).",
-      carte_mentale_json: JSON.stringify({
-        title: "Foyers et Cycle Auscultatoire",
-        nodes: [
-          {
-            label: "Auscultation Cardiaque",
-            children: [
-              { label: "Foyer Aortique (2e EIC Droit)" },
-              { label: "Foyer Pulmonaire (2e EIC Gauche)" },
-              { label: "Foyer Tricuspide (Appendice Xiphoïde)" },
-              { label: "Foyer Mitral (Apex - 5e EIC Gauche LMC)" },
-              { label: "B1 (Fermeture AV) -> Systole -> B2 (Fermeture Sigmoïdes) -> Diastole (B3/B4)" },
-            ],
-          },
-        ],
-      }),
-    },
-  });
-
-  // Cartes Leçon 2.2
-  await prisma.card.createMany({
-    data: [
-      {
-        lesson_id: lesson2_2.id,
-        systeme: "cardio",
-        niveau_difficulte: 2,
-        type_question: "ASSOCIATION",
-        contexte_clinique: "Repérage anatomique au lit du malade :",
-        question_fr: "Associez chaque foyer d'auscultation cardiaque à son repère anatomique précis :",
-        options_json: JSON.stringify({
-          pairs: [
-            { item: "Foyer Aortique", match: "2ème espace intercostal droit, bord sternal" },
-            { item: "Foyer Pulmonaire", match: "2ème espace intercostal gauche, bord sternal" },
-            { item: "Foyer Mitral (apex)", match: "5ème espace intercostal gauche, ligne médioclaviculaire" },
-            { item: "Foyer Tricuspide", match: "Bas du sternum / appendice xiphoïde" },
-          ],
-        }),
-        reponse_correcte: JSON.stringify({
-          "Foyer Aortique": "2ème espace intercostal droit, bord sternal",
-          "Foyer Pulmonaire": "2ème espace intercostal gauche, bord sternal",
-          "Foyer Mitral (apex)": "5ème espace intercostal gauche, ligne médioclaviculaire",
-          "Foyer Tricuspide": "Bas du sternum / appendice xiphoïde",
-        }),
-        feedback_fr: "Moyen mnémotechnique classique : A-P-T-M (Aortique 2e EIC droit, Pulmonaire 2e EIC gauche, Tricuspide xiphoïde, Mitral apex 5e EIC gauche).",
-        mnemonique_rappel: "A-P-T-M : Aortique (2e droit) -> Pulmonaire (2e gauche) -> Tricuspide (xiphoïde) -> Mitral (5e gauche).",
-        reference: "[Talley & O'Connor] Examen clinique et sémiologie, p.62 ; [Coustet] p.60",
-        tags: "auscultation,foyers,anatomie",
-      },
-      {
-        lesson_id: lesson2_2.id,
-        systeme: "cardio",
-        niveau_difficulte: 2,
-        type_question: "QCM",
-        question_fr: "À quel événement mécanique du cycle cardiaque correspond physiologiquement le premier bruit du cœur (B1) ?",
-        options_json: JSON.stringify([
-          { id: "A", text: "Fermeture des valves atrio-ventriculaires (mitrale et tricuspide)", is_correct: true },
-          { id: "B", text: "Fermeture des valves sigmoïdes (aortique et pulmonaire)", is_correct: false },
-          { id: "C", text: "Ouverture brutale de la valve aortique en systole", is_correct: false },
-          { id: "D", text: "Remplissage ventriculaire passif rapide", is_correct: false },
-        ]),
-        reponse_correcte: "A",
-        feedback_fr: "B1 marque le début de la systole ventriculaire et correspond à la fermeture des valves mitrale et tricuspide. B2 correspond à la fermeture des valves sigmoïdes aortique et pulmonaire.",
-        reference: "[Bourdarias] p.44 ; [UNESS-Cardio] p.22",
-        tags: "bruits-cardiaques,B1,B2",
-      },
-      {
-        lesson_id: lesson2_2.id,
-        systeme: "cardio",
-        niveau_difficulte: 3,
-        type_question: "QCM",
-        question_fr: "La découverte d'un dédoublement large et FIXE du deuxième bruit cardiaque (B2) au foyer pulmonaire est pathognomonique de quelle anomalie ?",
-        options_json: JSON.stringify([
-          { id: "A", text: "Communication Inter-Auriculaire (CIA)", is_correct: true },
-          { id: "B", text: "Rétrécissement aortique serré calcifié", is_correct: false },
-          { id: "C", text: "Insuffisance mitrale aiguë", is_correct: false },
-          { id: "D", text: "Péricardite aiguë constrictive", is_correct: false },
-        ]),
-        reponse_correcte: "A",
-        feedback_fr: "Le shunt gauche-droite auriculaire maintient un débit pulmonaire élevé constant insensible aux variations respiratoires, créant un dédoublement fixe de B2 [Jules Constant p.112].",
-        reference: "[Jules Constant] Essentials of Bedside Cardiology, p.112 ; [Coustet] p.62",
-        tags: "B2,dédoublement,CIA",
-      },
-    ],
-  });
-
-  // Leçon 2.3 : Souffles Cardiaques fondamentaux
-  const lesson2_3 = await prisma.lesson.create({
-    data: {
-      module_id: module2.id,
-      slug: "souffles-cardiaques-fondamentaux",
-      nom_fr: "Souffles cardiaques & Manœuvres dynamiques",
-      description_fr: "Différencier souffles systoliques et diastoliques, intensité de Levine et manœuvres auscultatoires.",
-      niveau_difficulte: 3,
-      ordre_affichage: 3,
-      xp_reward: 35,
-      cours_intro_fr: "Un souffle cardiaque résulte d'un écoulement sanguin turbulent à travers un orifice valvulaire rétréci ou fuyant. Sa caractérisation repose sur sa chronologie, son foyer maximal, son irradiation, son timbre et sa réaction aux manœuvres dynamiques.",
-      cours_detaille_fr: `### 1. Les Souffles Systoliques (Entre B1 et B2)
-- **Rétrécissement Aortique (RA)** : Souffle méso-systolique éjectionnel, rude et râpeux, en losange (*crescendo-decrescendo*), maximum au foyer aortique (2e EIC droit), **irradiant vers les carotides**. Diminution ou abolition du B2 si rétrécissement serré.
-- **Insuffisance Mitrale (IM)** : Souffle holosystolique (couvrant toute la systole), doux, « en jet de vapeur », maximum à l'apex (foyer mitral), **irradiant vers l'aisselle gauche**.
-- **Cardiomyopathie Hypertrophique Obstructive (CMHO)** : Souffle méso-systolique éjectionnel parasternal gauche augmentant lors de la manœuvre de Valsalva.
-
-### 2. Les Souffles Diastoliques (Entre B2 et le B1 suivant - Toujours Pathologiques)
-- **Insuffisance Aortique (IA)** : Souffle holodiastolique doux, lointain, « humé », maximum au foyer aortique et au bord sternal gauche (foyer d'Erb), irradiant vers l'appendice xiphoïde. Signes d'hyperpulsatilité : signe de Musset (hochements de tête), pouls de Corrigan, double souffle crural de Duroziez.
-- **Rétrécissement Mitral (RM)** : Roulement diastolique sourd et grave au foyer mitral avec éclat du B1 et claquement d'ouverture mitrale (triade de Duroziez).
-
-### 3. Les Manœuvres Dynamiques Auscultatoires (*Jules Constant p.140, Bates p.325*)
-- **Manœuvre de Rivero-Carvallo (Inspiration profonde)** : Augmente le retour veineux droit $\rightarrow$ **augmente tous les souffles du cœur droit** (Insuffisance tricuspide, sténose pulmonaire).
-- **Manœuvre de Valsalva / Passage debout** : Diminue le retour veineux et le volume ventriculaire $\rightarrow$ **diminue la majorité des souffles**, mais **AUGMENTE le souffle de CMHO** et avance le clic du prolapsus mitral (Syndrome de Barlow).
-- **Squatting / Accroupissement** : Augmente le retour veineux et la postcharge $\rightarrow$ augmente les souffles de RA et d'IA, diminue le souffle de CMHO.`,
-      cours_points_cles_fr: `- Souffle râpeux au 2e EIC droit irradiant aux carotides = Rétrécissement Aortique (RA).
-- Souffle en jet de vapeur à l'apex irradiant à l'aisselle = Insuffisance Mitrale (IM).
-- **Règle d'or** : Tout souffle diastolique est TOUJOURS organique et pathologique.
-- Manœuvre de Rivero-Carvallo (inspiration) = majore les souffles droits.
-- Intensité >= 4/6 = présence d'un frémissement palpable.`,
-      pieges_cliniques_fr: `⚠️ **Attention** : L'intensité d'un souffle aortique ne reflète pas toujours sa sévérité ! En cas d'insuffisance cardiaque sévère à bas débit, un rétrécissement aortique très serré peut n'avoir qu'un souffle discret (1/6 ou 2/6).`,
-      mnemonique: "RA = Carotides (Râpeux) / IM = Aisselle (Jet de vapeur). Valsalva augmente la CMHO. Rivero-Carvallo augmente le cœur droit.",
-      carte_mentale_json: JSON.stringify({
-        title: "Classification des Souffles & Manœuvres",
-        nodes: [
-          {
-            label: "Souffles Cardiaques",
-            children: [
-              {
-                label: "Systoliques (Entre B1 et B2)",
-                children: [
-                  { label: "Rétrécissement Aortique : 2e EIC Droit -> Carotides (Râpeux)" },
-                  { label: "Insuffisance Mitrale : Apex -> Aisselle (Jet de vapeur)" },
-                  { label: "CMHO : Parasternal gauche, majoré au Valsalva" },
-                ],
-              },
-              {
-                label: "Diastoliques (Entre B2 et B1) - Toujours pathologiques",
-                children: [
-                  { label: "Insuffisance Aortique : Bord sternal gauche (Doux, humé)" },
-                  { label: "Rétrécissement Mitral : Apex (Roulement diastolique)" },
-                ],
-              },
-            ],
-          },
-        ],
-      }),
-    },
-  });
-
-  // Cartes Leçon 2.3
-  await prisma.card.createMany({
-    data: [
-      {
-        lesson_id: lesson2_3.id,
-        systeme: "cardio",
-        niveau_difficulte: 3,
-        type_question: "CAS_CLINIQUE",
-        contexte_clinique: "Un homme de 78 ans consulte pour un essoufflement d'effort. L'auscultation retrouve un souffle systolique rude, râpeux, prédominant au 2e espace intercostal droit et irradiant vers les carotides.",
-        question_fr: "Quel est le diagnostic valvulaire le plus probable ?",
-        options_json: JSON.stringify([
-          { id: "A", text: "Rétrécissement aortique calcifié (maladie de Mönckeberg)", is_correct: true },
-          { id: "B", text: "Insuffisance mitrale dégénérative", is_correct: false },
-          { id: "C", text: "Insuffisance aortique dystrophique", is_correct: false },
-          { id: "D", text: "Communication inter-auriculaire", is_correct: false },
-        ]),
-        reponse_correcte: "A",
-        feedback_fr: "Le souffle méso-systolique éjectionnel, râpeux au foyer aortique avec irradiation aux carotides chez le sujet âgé est pathognomonique du rétrécissement aortique.",
-        mnemonique_rappel: "RA = Foyer Aortique + Râpeux + Irradiation carotides.",
-        reference: "[Bourdarias] p.68 ; [UNESS-Cardio] p.60",
-        tags: "souffles,valvulopathies,rétrécissement-aortique",
-      },
-      {
-        lesson_id: lesson2_3.id,
-        systeme: "cardio",
-        niveau_difficulte: 2,
-        type_question: "VRAI_FAUX",
-        question_fr: "Un souffle cardiaque diastolique peut être tout à fait anorganique (souffle fonctionnel ou innocent de l'enfant/adulte jeune).",
-        options_json: JSON.stringify([
-          { id: "true", text: "Vrai", is_correct: false },
-          { id: "false", text: "Faux", is_correct: true },
-        ]),
-        reponse_correcte: "false",
-        feedback_fr: "Faux. Un souffle fonctionnel/innocent est STRICTEMENT systolique. Un souffle diastolique est TOUJOURS organique et pathologique.",
-        reference: "[Coustet] p.65 ; [UNESS-Cardio] p.62",
-        tags: "souffle-diastolique,règle-or",
-      },
-      {
-        lesson_id: lesson2_3.id,
-        systeme: "cardio",
-        niveau_difficulte: 3,
-        type_question: "ASSOCIATION",
-        question_fr: "Associez chaque valvulopathie à la zone d'irradiation caractéristique de son souffle :",
-        options_json: JSON.stringify({
-          pairs: [
-            { item: "Rétrécissement Aortique", match: "Irradiation vers les artères carotides" },
-            { item: "Insuffisance Mitrale", match: "Irradiation vers le creux axillaire gauche" },
-            { item: "Insuffisance Aortique", match: "Irradiation le long du bord gauche du sternum" },
-            { item: "Insuffisance Tricuspide", match: "Majoration à l'inspiration profonde (signe de Rivero-Carvallo)" },
-          ],
-        }),
-        reponse_correcte: JSON.stringify({
-          "Rétrécissement Aortique": "Irradiation vers les artères carotides",
-          "Insuffisance Mitrale": "Irradiation vers le creux axillaire gauche",
-          "Insuffisance Aortique": "Irradiation le long du bord gauche du sternum",
-          "Insuffisance Tricuspide": "Majoration à l'inspiration profonde (signe de Rivero-Carvallo)",
-        }),
-        feedback_fr: "L'irradiation et la manœuvre inspiratoire permettent d'identifier formellement la valve en cause.",
-        reference: "[Talley & O'Connor] p.70 ; [Bariéty] p.128",
-        tags: "irradiations,souffles",
-      },
-      {
-        lesson_id: lesson2_3.id,
-        systeme: "cardio",
-        niveau_difficulte: 3,
-        type_question: "QCM",
-        contexte_clinique: "Lors de l'examen auscultatoire d'un patient jeune présentant un souffle méso-systolique :",
-        question_fr: "Quelle manœuvre auscultatoire permet d'augmenter spécifiquement le souffle d'une Cardiomyopathie Hypertrophique Obstructive (CMHO) en diminuant le remplissage ventriculaire ?",
-        options_json: JSON.stringify([
-          { id: "A", text: "La manœuvre de Valsalva ou le passage en orthostatisme", is_correct: true },
-          { id: "B", text: "L'accroupissement prolongé (Squatting)", is_correct: false },
-          { id: "C", text: "L'inspiration profonde bloquée (Rivero-Carvallo)", is_correct: false },
-          { id: "D", text: "L'élévation passive des jambes en décubitus", is_correct: false },
-        ]),
-        reponse_correcte: "A",
-        feedback_fr: "La manœuvre de Valsalva diminue le retour veineux, ce qui réduit le calibre de la chambre de chasse ventriculaire et majore l'obstacle dynamique dans la CMHO [Jules Constant p.140, Bates p.325].",
-        reference: "[Jules Constant] Essentials of Bedside Cardiology, p.140 ; [Bates] p.325",
-        tags: "manoeuvres,valsalva,CMHO",
-      },
-    ],
-  });
-
-  // ==========================================
-  // MODULE 3 : EXAMENS COMPLÉMENTAIRES CARDIO
-  // ==========================================
-  console.log("📦 Module 3 : Examens complémentaires approfondis...");
-  const module3 = await prisma.module.create({
-    data: {
-      slug: "cardio-examens-complementaires",
-      nom_fr: "Examens complémentaires cardio",
-      nom_en: "Cardiovascular Diagnostic Tests",
-      description_fr: "Comprendre le rôle, les indications et la pertinence de l'ECG, de la radio de thorax, des biomarqueurs et de l'échocardiographie.",
-      systeme: "cardio",
-      ordre_affichage: 3,
-      icone: "Activity",
-      color: "sky",
-    },
-  });
-
-  // Leçon 3.1 : ECG Fondamentaux
+  // 3.1 Foyers & Bruits B1/B2
   const lesson3_1 = await prisma.lesson.create({
     data: {
       module_id: module3.id,
-      slug: "ecg-principes-indications",
-      nom_fr: "Électrocardiogramme (ECG) : Fondamentaux",
-      description_fr: "Les 12 dérivations, repères temporels, étalonnage standard et analyse méthodique du tracé.",
+      slug: "foyers-anatomiques-bruits-b1-b2",
+      nom_fr: "Donjon 3.1 : Les 4 Foyers Anatomiques & Bruits B1/B2",
+      description_fr: "Foyers Aortique, Pulmonaire, Tricuspide, Mitral et dédoublement physiologique de B2.",
       niveau_difficulte: 1,
       ordre_affichage: 1,
-      xp_reward: 25,
-      cours_intro_fr: "L'ECG 12 dérivations est l'examen complémentaire de base en cardiologie. Il enregistre l'activité électrique du myocarde sur du papier millimétré à vitesse et voltage standardisés.",
-      cours_detaille_fr: `### 1. Paramètres d'Étalonnage Standard
-- **Vitesse de défilement** : **25 mm/s**.
-  - $1 \\text{ mm} = 0{,}04 \\text{ seconde (40 ms)}$.
-  - $5 \\text{ mm (1 grand carreau)} = 0{,}20 \\text{ seconde (200 ms)}$.
-- **Voltage / Amplitude** : **10 mm/mV**.
-  - $1 \\text{ mm} = 0{,}1 \\text{ mV}$.
-  - $10 \\text{ mm (2 grands carreaux)} = 1 \\text{ mV}$.
-
-### 2. Les 12 Dérivations & Topographie Myocardique
-- **6 dérivations frontales (périphériques)** :
-  - DI, aVL : Paroi latérale haute.
-  - DII, DIII, aVF : Paroi inférieure (diaphragmatique).
-  - aVR : Cavité ventriculaire droite (dérivation inversée).
-- **6 dérivations précordiales (horizontales)** :
-  - **V1 - V2** : Paroi septale (V1 au 4e EIC droit, V2 au 4e EIC gauche).
-  - **V3 - V4** : Paroi antérieure (V4 au 5e EIC ligne médioclaviculaire).
-  - **V5 - V6** : Paroi latérale basse (5e EIC lignes axillaires antérieure et moyenne).
-  - *(Dérivations complémentaires : V7-V8-V9 territoire postérieur / basal ; V3R-V4R ventricule droit).*
-
-### 3. Les Ondes et Intervalles Normaux
-- **Onde P** : Dépolarisation des oreillettes (durée < 120 ms, amplitude < 2,5 mm en DII).
-- **Intervalle PR** : Temps de conduction auriculo-ventriculaire (normal entre 120 et 200 ms = 3 à 5 petits carreaux).
-- **Complexe QRS** : Dépolarisation des ventricules (durée normale < 80 à 100 ms).
-- **Segment ST et Onde T** : Repolarisation ventriculaire (le segment ST doit être rigoureusement isoélectrique).`,
-      cours_points_cles_fr: `- Vitesse 25 mm/s -> 1 petit carreau = 0,04 s (40 ms). 1 grand carreau = 0,20 s (200 ms).
-- Rythme sinusal normal = Onde P positive en DII, constante, suivie à chaque fois d'un complexe QRS fin.
-- Un sus-décalage du segment ST persistant convexe vers le haut signe un syndrome coronarien aigu avec sus-décalage (STEMI / Onde de Pardee).`,
-      pieges_cliniques_fr: `⚠️ Toujours vérifier l'étalonnage en début de tracé : une vitesse de 50 mm/s doublerait artificiellement la durée apparente de tous les intervalles !`,
-      mnemonique: "P (Oreillettes) -> PR (Conduction AV) -> QRS (Ventricules) -> T (Repolarisation).",
-      carte_mentale_json: JSON.stringify({
-        title: "Analyse Méthodique de l'ECG",
-        nodes: [
-          {
-            label: "Lecture Méthodique de l'ECG",
-            children: [
-              { label: "1. Étalonnage : Vitesse 25 mm/s, Amplitude 10 mm/mV" },
-              { label: "2. Rythme : Sinusal ou non (Onde P avant chaque QRS)" },
-              { label: "3. Fréquence : 300 / nombre de grands carreaux RR (Normale : 60-100 bpm)" },
-              { label: "4. Intervalles : PR (120-200 ms), QRS (< 100 ms), QTc (< 440 ms)" },
-              { label: "5. Repolarisation : Segment ST (isoélectrique) et onde T" },
-            ],
-          },
-        ],
-      }),
+      xp_reward: 30,
+      gems_reward: 10,
+      dungeon_type: "standard",
+      boss_name: "Sentinelle du Stéthoscope",
+      rooms_count: 3,
+      cours_intro_fr: "L'auscultation méthodique explore les 4 foyers anatomiques : Aortique (2e EICD), Pulmonaire (2e EICG), Tricuspide (xiphoïde) et Mitral (apex, 5e EICG).",
+      cours_points_cles_fr: "• B1 (« Toum ») : fermeture des valves atrio-ventriculaires (M1/T1), début de systole.\n• B2 (« Ta ») : fermeture des valves sigmoïdes (A2/P2), fin de systole.\n• Dédoublement physiologique de B2 audible à l'inspiration au foyer pulmonaire.",
+      mnemonique: "A-P-T-M : Aortique, Pulmonaire, Tricuspide, Mitral !",
     },
   });
 
-  // Cartes Leçon 3.1
   await prisma.card.createMany({
     data: [
       {
@@ -1172,94 +1086,73 @@ D'après les traités de sémiologie médicale (*Coustet p.48, Bariéty p.110*) 
         systeme: "cardio",
         niveau_difficulte: 1,
         type_question: "QCM",
-        question_fr: "À la vitesse d'enregistrement standard de l'ECG (25 mm/s), quelle est la valeur temporelle d'un petit carreau de 1 mm ?",
+        room_number: 1,
+        room_type: "standard",
+        question_fr: "Où se situe le foyer d'auscultation aortique sur la paroi thoracique antérieure ?",
         options_json: JSON.stringify([
-          { id: "A", text: "0,04 seconde (40 millisecondes)", is_correct: true },
-          { id: "B", text: "0,10 seconde (100 millisecondes)", is_correct: false },
-          { id: "C", text: "0,20 seconde (200 millisecondes)", is_correct: false },
-          { id: "D", text: "0,01 seconde (10 millisecondes)", is_correct: false },
+          { id: "A", text: "Au 2e espace intercostal droit, au bord droit du sternum", is_correct: true },
+          { id: "B", text: "Au 5e espace intercostal gauche, sur la ligne médioclaviculaire", is_correct: false },
         ]),
         reponse_correcte: "A",
-        feedback_fr: "À 25 mm/s : 1 mm = 0,04 s (40 ms). Un grand carreau de 5 mm correspond à 0,20 s (200 ms).",
-        reference: "[UNESS-Cardio] ECG normal et pathologique, p.8 ; [Coustet] p.75",
-        tags: "ECG,étalonnage,paramètres",
+        feedback_fr: "Le foyer aortique se situe au 2e EIC droit. Le foyer mitral se situe à l'apex (5e EIC gauche).",
+        reference: "[Coustet] p.66",
+        tags: "foyers,auscultation",
       },
       {
         lesson_id: lesson3_1.id,
         systeme: "cardio",
         niveau_difficulte: 2,
-        type_question: "ASSOCIATION",
-        question_fr: "Associez chaque groupe de dérivations précordiales au territoire myocardique exploré :",
-        options_json: JSON.stringify({
-          pairs: [
-            { item: "Dérivations V1 - V2", match: "Territoire Septal / Ventricule droit" },
-            { item: "Dérivations V3 - V4", match: "Territoire Antérieur" },
-            { item: "Dérivations V5 - V6", match: "Territoire Latéral bas / Apex" },
-            { item: "Dérivations DII, DIII, aVF", match: "Territoire Inférieur (diaphragmatique)" },
-          ],
-        }),
-        reponse_correcte: JSON.stringify({
-          "Dérivations V1 - V2": "Territoire Septal / Ventricule droit",
-          "Dérivations V3 - V4": "Territoire Antérieur",
-          "Dérivations V5 - V6": "Territoire Latéral bas / Apex",
-          "Dérivations DII, DIII, aVF": "Territoire Inférieur (diaphragmatique)",
-        }),
-        feedback_fr: "La topographie des dérivations permet de localiser avec précision le territoire d'une ischémie coronarienne.",
-        reference: "[UNESS-Cardio] p.10 ; [Coustet] p.78",
-        tags: "dérivations,territoires,ECG",
+        type_question: "VRAI_FAUX",
+        room_number: 2,
+        room_type: "standard",
+        question_fr: "VRAI ou FAUX : Le premier bruit du cœur B1 est synchrone de la montée de l'onde pulsatile carotidienne.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Vrai ! B1 marque le début de la contraction isovolumétrique et de l'éjection ventriculaire.",
+        reference: "[Bariéty] p.132",
+        tags: "B1,pouls",
+      },
+      {
+        lesson_id: lesson3_1.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "CAS_CLINIQUE",
+        room_number: 3,
+        room_type: "guardian",
+        contexte_clinique: "Lors de l'auscultation d'un jeune athlète au foyer pulmonaire, vous entendez un dédoublement net du bruit B2 lors d'une inspiration profonde, qui disparaît à l'expiration.",
+        question_fr: "Quelle est la signification sémiologique de ce phénomène ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Un dédoublement physiologique normal de B2 lié à l'augmentation du retour veineux droit à l'inspiration retardant la fermeture de P2", is_correct: true },
+          { id: "B", text: "Une communication interauriculaire sévère", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Le dédoublement inspiratoire variable de B2 est parfaitement physiologique chez le sujet jeune.",
+        reference: "[McGee] p.348",
+        tags: "B2,dédoublement",
       },
     ],
   });
 
-  // Leçon 3.2 : Radio & Biomarqueurs
+  // 3.2 Souffles Systoliques
   const lesson3_2 = await prisma.lesson.create({
     data: {
       module_id: module3.id,
-      slug: "radio-thorax-et-biomarqueurs",
-      nom_fr: "Radiographie & Biomarqueurs (Troponine, BNP)",
-      description_fr: "Index cardiothoracique, signes radiologiques d'OAP, Troponine ultrasensible et peptides natriurétiques.",
+      slug: "souffles-systoliques-ra-im",
+      nom_fr: "Donjon 3.2 : Souffles Systoliques : Rétrécissement Aortique & Insuffisance Mitrale",
+      description_fr: "Souffle éjectionnel râpeux irradiant aux carotides (RA) vs Souffle holosystolique en jet de vapeur axillaire (IM).",
       niveau_difficulte: 2,
       ordre_affichage: 2,
-      xp_reward: 30,
-      cours_intro_fr: "La radiographie thoracique et les biomarqueurs sanguins (Troponine, BNP/NT-proBNP, D-Dimères) complètent l'examen clinique pour confirmer l'insuffisance cardiaque, l'ischémie ou la maladie thromboembolique.",
-      cours_detaille_fr: `### 1. La Radiographie Thoracique (Face debout)
-- **Index Cardio-Thoracique (ICT)** : Rapport $\\frac{\\text{Diamètre transversal du cœur}}{\\text{Diamètre transversal du thorax}}$.
-  - Normal $\\le 0{,}50$ chez l'adulte debout.
-  - **ICT $> 0{,}50$ = Cardiomégalie**.
-- **Signes Radiologiques de Surcharge Pulmonaire (Stades hémodynamiques)** :
-  - **Stade 1 ($PCP 13-18\\text{ mmHg}$)** : Redistribution vasculaire vers les sommets (inversion du rapport apex/base).
-  - **Stade 2 ($PCP 18-25\\text{ mmHg}$)** : Œdème interstitiel avec lignes B de Kerley aux bases et flou péri-broncho-vasculaire.
-  - **Stade 3 ($PCP > 25\\text{ mmHg}$)** : Œdème alvéolaire avec opacités floues bilatérales péri-hilaires « en ailes de papillon ».
-
-### 2. Les Biomarqueurs Cardiovasculaires Clés
-- **Troponine I ou T ultrasensible (us)** : Marqueur d'extrême sensibilité de **nécrose myocardique**. Indispensable pour le diagnostic de syndrome coronarien aigu (SCA).
-- **BNP / NT-proBNP** : Peptides natriurétiques sécrétés par les ventricules en réponse à l'étirement et à l'hyperpression. Excellente valeur prédictive négative ($> 98\\%$) pour **exclure une insuffisance cardiaque** si BNP $< 100\\text{ pg/mL}$ ou NT-proBNP $< 300\\text{ pg/mL}$.
-- **D-Dimères** : Produits de dégradation de la fibrine. Valeur prédictive négative très élevée ($> 99\\%$) pour **exclure une embolie pulmonaire** si $< 500\\text{ ng/mL}$.`,
-      cours_points_cles_fr: `- ICT $> 0{,}50$ = Cardiomégalie.
-- Opacités en ailes de papillon + crépitants = Œdème Aigu du Poumon (OAP).
-- Troponine = Nécrose myocardique / Infarctus.
-- BNP/NT-proBNP = Pression de remplissage / Insuffisance cardiaque.
-- D-Dimères $< 500$ ng/mL = Élimine l'embolie pulmonaire chez le sujet à probabilité faible/intermédiaire.`,
-      pieges_cliniques_fr: `⚠️ La troponine peut s'élever en dehors de l'infarctus (ex: myocardite, embolie pulmonaire, insuffisance rénale sévère, sepsis). C'est la cinétique (ascension puis décroissance) qui signe le SCA aigu !`,
-      mnemonique: "Troponine = Nécrose / BNP = Pression & Surcharge / D-Dimères = Exclusion Thrombose.",
-      carte_mentale_json: JSON.stringify({
-        title: "Biomarqueurs & Radiographie Cardiaque",
-        nodes: [
-          {
-            label: "Examens Paracliniques Rapides",
-            children: [
-              { label: "Radiographie Thorax : ICT > 0.50 (Cardiomégalie) + Ailes de papillon (OAP)" },
-              { label: "Troponine us : Élévation et cinétique de nécrose (Infarctus, Myocardite)" },
-              { label: "BNP / NT-proBNP : Élévation en cas de décompensation cardiaque" },
-              { label: "D-Dimères : Si < 500 ng/mL -> exclusion de l'embolie pulmonaire" },
-            ],
-          },
-        ],
-      }),
+      xp_reward: 35,
+      gems_reward: 12,
+      dungeon_type: "standard",
+      boss_name: "Golem des Souffles Systoliques",
+      rooms_count: 3,
+      cours_intro_fr: "Les souffles systoliques surviennent entre B1 et B2. Le Rétrécissement Aortique (RA) donne un souffle éjectionnel losangique râpeux, tandis que l'Insuffisance Mitrale (IM) donne un souffle régurgitant holosystolique en jet de vapeur.",
+      cours_points_cles_fr: "• Rétrécissement Aortique (RA) : Foyer aortique, méso-systolique éjectionnel râpeux, irradiation aux carotides.\n• Insuffisance Mitrale (IM) : Foyer mitral (apex), holosystolique doux en jet de vapeur, irradiation à l'aisselle gauche.",
+      mnemonique: "RA = Carotides râpeuses ; IM = Aisselle en jet de vapeur !",
     },
   });
 
-  // Cartes Leçon 3.2
   await prisma.card.createMany({
     data: [
       {
@@ -1267,147 +1160,1161 @@ D'après les traités de sémiologie médicale (*Coustet p.48, Bariéty p.110*) 
         systeme: "cardio",
         niveau_difficulte: 2,
         type_question: "QCM",
-        question_fr: "Sur une radiographie thoracique de face chez un adulte debout, à partir de quelle valeur de l'index cardio-thoracique (ICT) définit-on une cardiomégalie ?",
+        room_number: 1,
+        room_type: "standard",
+        question_fr: "Quelle est l'irradiation caractéristique du souffle de rétrécissement aortique serré ?",
         options_json: JSON.stringify([
-          { id: "A", text: "ICT supérieur à 0,50 (50 %)", is_correct: true },
-          { id: "B", text: "ICT supérieur à 0,35 (35 %)", is_correct: false },
-          { id: "C", text: "ICT supérieur à 0,70 (70 %)", is_correct: false },
-          { id: "D", text: "ICT supérieur à 0,20 (20 %)", is_correct: false },
+          { id: "A", text: "Vers les vaisseaux du cou (artères carotides primitives)", is_correct: true },
+          { id: "B", text: "Vers le creux axillaire gauche", is_correct: false },
         ]),
         reponse_correcte: "A",
-        feedback_fr: "Chez l'adulte debout, le rapport diamètre cardiaque / diamètre thoracique est normalement inférieur ou égal à 0,50. Au-delà, on parle de cardiomégalie.",
-        reference: "[Coustet] p.82 ; [UNESS-Cardio] p.28",
-        tags: "ICT,radiographie,cardiomégalie",
+        feedback_fr: "Le souffle éjectionnel aortique est projeté dans le sens du flux sanguin à travers l'orifice sténosé vers les carotides.",
+        reference: "[Coustet] p.70",
+        tags: "RA,carotides",
       },
       {
         lesson_id: lesson3_2.id,
         systeme: "cardio",
         niveau_difficulte: 2,
-        type_question: "ASSOCIATION",
-        question_fr: "Associez chaque biomarqueur sanguin à sa principale valeur d'utilisation en pratique clinique :",
-        options_json: JSON.stringify({
-          pairs: [
-            { item: "Troponine I ou T ultrasensible", match: "Marqueur de nécrose myocardique aiguë (SCA)" },
-            { item: "BNP ou NT-proBNP", match: "Marqueur d'étirement myocardique et d'insuffisance cardiaque" },
-            { item: "D-Dimères (< 500 ng/mL)", match: "Exclusion d'une maladie thromboembolique veineuse" },
-          ],
-        }),
-        reponse_correcte: JSON.stringify({
-          "Troponine I ou T ultrasensible": "Marqueur de nécrose myocardique aiguë (SCA)",
-          "BNP ou NT-proBNP": "Marqueur d'étirement myocardique et d'insuffisance cardiaque",
-          "D-Dimères (< 500 ng/mL)": "Exclusion d'une maladie thromboembolique veineuse",
-        }),
-        feedback_fr: "Ces trois biomarqueurs constituent le bilan biologique d'urgence en cardiologie.",
-        reference: "[UNESS-Cardio] p.30 ; [Coustet] p.80",
-        tags: "biomarqueurs,troponine,BNP",
+        type_question: "VRAI_FAUX",
+        room_number: 2,
+        room_type: "standard",
+        question_fr: "VRAI ou FAUX : Le souffle d'insuffisance mitrale typique est holosystolique (couvrant toute la systole de B1 à B2), d'intensité constante (« en plateau ») et de timbre en jet de vapeur.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Vrai ! L'IM produit un reflux de haute vélocité du VG vers l'OG dès la fermeture atrioventriculaire.",
+        reference: "[Bariéty] p.136",
+        tags: "IM,holosystolique",
+      },
+      {
+        lesson_id: lesson3_2.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "CAS_CLINIQUE",
+        room_number: 3,
+        room_type: "guardian",
+        contexte_clinique: "Un homme de 78 ans présente un souffle systolique rude 4/6 au foyer aortique avec abolition du deuxième bruit B2 et un pouls carotidien d'ascension lente (pulsus parvus et tardus).",
+        question_fr: "Quel diagnostic valvulaire sévère devez-vous porter ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Un rétrécissement aortique calcifié serré (Maladie de Mönckeberg)", is_correct: true },
+          { id: "B", text: "Une insuffisance pulmonaire congénitale", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "L'association souffle râpeux + abolition de B2 + pouls parvus et tardus signe la sténose aortique serrée.",
+        reference: "[McGee] p.356",
+        tags: "RA,serré,B2",
       },
     ],
   });
 
-  // Leçon 3.3 : Échocardiographie Doppler
+  // 3.3 Souffles Diastoliques
   const lesson3_3 = await prisma.lesson.create({
     data: {
       module_id: module3.id,
-      slug: "echocardiographie-doppler",
-      nom_fr: "Échocardiographie Doppler & Explorations",
-      description_fr: "Indications de l'ETT et de l'ETO, mesure de la FEVG, gradients valvulaires et péricarde.",
-      niveau_difficulte: 3,
+      slug: "souffles-diastoliques-ia-rm",
+      nom_fr: "Donjon 3.3 : Souffles Diastoliques : Insuffisance Aortique & Rétrécissement Mitral",
+      description_fr: "Souffle doux aspiratif au foyer aortique (IA) vs Roulement diastolique apexien (RM).",
+      niveau_difficulte: 2,
       ordre_affichage: 3,
       xp_reward: 35,
-      cours_intro_fr: "L'échocardiographie-Doppler transthoracique (ETT) est l'examen morphologique et hémodynamique cardiaque de référence. Non invasive et réalisable au lit du malade, elle évalue la structure, la contractilité et les flux valvulaires.",
-      cours_detaille_fr: `### 1. Échocardiographie Transthoracique (ETT) vs Transœsophagienne (ETO)
-- **ETT (1ère intention non invasive)** : Réalisée par sonde posée sur le thorax (vues parasternale grand axe/petit axe, apicale 4/5/2 cavités, sous-costale). Évalue la taille des cavités, l'épaisseur des parois, la contractilité globale et les flux valvulaires.
-- **ETO (2ème intention invasive)** : Sonde endoscopique introduite dans l'œsophage. Excellente visualisation des oreillettes (recherche de thrombus dans l'auricule gauche avant cardioversion de FA), des valves natives/prothétiques (recherche de végétations d'endocardite infectieuse) et de l'aorte thoracique (dissection).
-
-### 2. Paramètres Clés Mesurés à l'Échocardiographie
-- **Fraction d'Éjection du Ventricule Gauche (FEVG)** :
-  - **Normale : $\\ge 50\\%$**.
-  - Altération modérée : $40 - 49\\%$.
-  - Altération sévère : $< 40\\%$ (Insuffisance cardiaque à fraction d'éjection réduite IC-FEr).
-- **Doppler cardiaque** : Mesure la vitesse des flux sanguins pour quantifier les sténoses (gradients de pression via l'équation de Bernoulli $\\Delta P = 4v^2$) et les régurgitations (volume régurgité).
-- **Péricarde** : Visualisation immédiate d'un décollement liquidien péricardique (épanchement ou tamponnade avec compression des cavités droites).`,
-      cours_points_cles_fr: `- FEVG normale $\\ge 50\\%$.
-- ETT = Examen de 1ère intention pour tout souffle ou suspicion d'insuffisance cardiaque.
-- ETO = Indiquée pour la recherche d'endocardite infectieuse, de thrombus intracardiaque ou de dissection aortique.
-- Échocardiographie au lit du malade = Examen clé d'urgence dans le choc cardiogénique et la tamponnade.`,
-      pieges_cliniques_fr: `⚠️ Une FEVG normale n'élimine pas une insuffisance cardiaque ! Il peut s'agir d'une **Insuffisance Cardiaque à Fraction d'Éjection Préservée (IC-FEp)** par anomalie du remplissage diastolique (ventricule rigide).`,
-      mnemonique: "ETT (Partout / 1ère intention) vs ETO (Œsophage / Zoom sur valves, auricules et endocardite).",
-      carte_mentale_json: JSON.stringify({
-        title: "Échocardiographie Doppler en Pratique",
-        nodes: [
-          {
-            label: "Échocardiographie Cardiaque",
-            children: [
-              {
-                label: "ETT (Transthoracique)",
-                children: [
-                  { label: "FEVG (Normale >= 50 %)" },
-                  { label: "Épaisseur des parois & Diamètres cavités" },
-                  { label: "Doppler : Fuites et sténoses valvulaires" },
-                  { label: "Péricarde : Épanchement / Tamponnade" },
-                ],
-              },
-              {
-                label: "ETO (Transœsophagienne)",
-                children: [
-                  { label: "Végétations d'endocardite infectieuse" },
-                  { label: "Thrombus de l'auricule gauche (FA)" },
-                  { label: "Dissection de l'aorte thoracique" },
-                ],
-              },
-            ],
-          },
-        ],
-      }),
+      gems_reward: 12,
+      dungeon_type: "standard",
+      boss_name: "Sentinelle de la Diastole",
+      rooms_count: 3,
+      cours_intro_fr: "Les souffles diastoliques surviennent entre B2 et B1. Ils sont toujours pathologiques ! L'Insuffisance Aortique (IA) donne un souffle doux humé aspiratif, tandis que le Rétrécissement Mitral (RM) donne un roulement diastolique.",
+      cours_points_cles_fr: "• Insuffisance Aortique (IA) : Souffle doux humé aspiratif, débutant à B2, le long du bord gauche du sternum, majoré penché en avant en expiration.\n• Signes périphériques d'IA : Élargissement de la pression pulsée (hyper-pulsatilité), signe de Musset (hochement de tête).\n• Rétrécissement Mitral (RM) : Roulement diastolique à l'apex en décubitus latéral gauche avec claquement d'ouverture mitrale (COM) et éclat de B1.",
+      mnemonique: "IA = Aspiratif et hyperpulsatile ; RM = Roulement avec éclat de B1 !",
     },
   });
 
-  // Cartes Leçon 3.3
   await prisma.card.createMany({
     data: [
       {
         lesson_id: lesson3_3.id,
         systeme: "cardio",
-        niveau_difficulte: 3,
+        niveau_difficulte: 2,
         type_question: "QCM",
-        question_fr: "En échocardiographie-Doppler, quelle est la valeur seuil normale de la Fraction d'Éjection du Ventricule Gauche (FEVG) chez l'adulte ?",
+        room_number: 1,
+        room_type: "standard",
+        question_fr: "Quelle manœuvre d'auscultation permet de sensibiliser au maximum la recherche d'un souffle d'insuffisance aortique minime ?",
         options_json: JSON.stringify([
-          { id: "A", text: "Supérieure ou égale à 50 %", is_correct: true },
-          { id: "B", text: "Supérieure ou égale à 75 %", is_correct: false },
-          { id: "C", text: "Supérieure ou égale à 30 %", is_correct: false },
-          { id: "D", text: "Exactement 100 %", is_correct: false },
+          { id: "A", text: "Faire asseoir le patient penché en avant, en apnée expiratoire complète", is_correct: true },
+          { id: "B", text: "Faire allonger le patient sur le ventre", is_correct: false },
         ]),
         reponse_correcte: "A",
-        feedback_fr: "Une FEVG normale est supérieure ou égale à 50 %. Une valeur inférieure à 40 % définit l'insuffisance cardiaque à fraction d'éjection altérée.",
-        reference: "[UNESS-Cardio] p.34 ; [Bourdarias] p.90",
-        tags: "FEVG,échocardiographie,normes",
+        feedback_fr: "La position assise penchée en avant en expiration rapproche la racine aortique de la paroi thoracique antérieure.",
+        reference: "[Coustet] p.74",
+        tags: "IA,manœuvre",
       },
       {
         lesson_id: lesson3_3.id,
         systeme: "cardio",
-        niveau_difficulte: 3,
-        type_question: "ASSOCIATION",
-        question_fr: "Associez chaque modalité échographique à son indication préférentielle :",
-        options_json: JSON.stringify({
-          pairs: [
-            { item: "Échocardiographie Transthoracique (ETT)", match: "Évaluation de 1ère intention de la FEVG et des cavités" },
-            { item: "Échocardiographie Transœsophagienne (ETO)", match: "Recherche de végétations d'endocardite ou de thrombus auriculaire" },
-            { item: "Doppler continu / pulsé", match: "Quantification des vitesses et gradients de pression valvulaires" },
-          ],
-        }),
-        reponse_correcte: JSON.stringify({
-          "Échocardiographie Transthoracique (ETT)": "Évaluation de 1ère intention de la FEVG et des cavités",
-          "Échocardiographie Transœsophagienne (ETO)": "Recherche de végétations d'endocardite ou de thrombus auriculaire",
-          "Doppler continu / pulsé": "Quantification des vitesses et gradients de pression valvulaires",
-        }),
-        feedback_fr: "L'ETT est l'examen d'accès rapide non invasif, tandis que l'ETO offre une résolution supérieure pour les structures postérieures.",
-        reference: "[Talley & O'Connor] p.85 ; [Coustet] p.84",
-        tags: "ETT,ETO,échocardiographie",
+        niveau_difficulte: 2,
+        type_question: "VRAI_FAUX",
+        room_number: 2,
+        room_type: "standard",
+        question_fr: "VRAI ou FAUX : Le signe de Musset correspond à des secousses involontaires de la tête synchrones des battements cardiaques, résultant de l'élargissement majeur de la différentielle tensionnelle dans l'insuffisance aortique volumineuse.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Vrai ! Le signe de Musset est un signe périphérique classique d'IA massive [Bariéty p.130].",
+        reference: "[Bariéty] p.130",
+        tags: "musset,IA",
+      },
+      {
+        lesson_id: lesson3_3.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "CAS_CLINIQUE",
+        room_number: 3,
+        room_type: "guardian",
+        contexte_clinique: "À l'auscultation de l'apex chez une patiente de 55 ans en décubitus latéral gauche avec la cloche du stéthoscope, vous percevez un éclat du premier bruit (B1), suivi d'un claquement sec puis d'un roulement sourd en milieu de diastole.",
+        question_fr: "Quel est ce triomphe sémiologique classique (triade de Duroziez) ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Le rétrécissement mitral (RM)", is_correct: true },
+          { id: "B", text: "Une péricardite aiguë constrictive", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Éclat de B1 + Claquement d'ouverture mitrale (COM) + Roulement diastolique = Triade classique du rétrécissement mitral.",
+        reference: "[Coustet] p.72",
+        tags: "RM,duroziez",
       },
     ],
   });
 
-  // Progression initiale
+  // 3.4 Bruits Surajoutés & Galops
+  const lesson3_4 = await prisma.lesson.create({
+    data: {
+      module_id: module3.id,
+      slug: "bruits-surajoutes-galops-b3-b4",
+      nom_fr: "Donjon 3.4 : Bruits Surajoutés & Galops B3/B4",
+      description_fr: "Galop protodiastolique B3, galop présystolique B4, clics d'éjection et frottement péricardique.",
+      niveau_difficulte: 2,
+      ordre_affichage: 4,
+      xp_reward: 35,
+      gems_reward: 12,
+      dungeon_type: "standard",
+      boss_name: "Sentinelle Acoustique",
+      rooms_count: 3,
+      cours_intro_fr: "Les galops sont des bruits surajoutés en diastole créant un rythme à 3 temps semblable au galop d'un cheval. Le B3 témoigne d'une surcharge volumétrique (VG dilaté), le B4 d'une surcharge de pression (VG hypertrophié rigide).",
+      cours_points_cles_fr: "• B3 (Protodiastolique) : remplissage passif rapide dans un VG dilaté (FEVG altérée).\n• B4 (Présystolique/Télédiastolique) : contraction atriale puissante contre un ventricule rigide (HTA, CMH).\n• Clic de prolapsus mitral (Syndrome de Barlow) : méso-systolique suivi d'un souffle télésystolique.",
+      mnemonique: "B3 = Dilaté / Flasque ; B4 = Rigide / Épais !",
+    },
+  });
+
+  await prisma.card.createMany({
+    data: [
+      {
+        lesson_id: lesson3_4.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "QCM",
+        room_number: 1,
+        room_type: "standard",
+        question_fr: "Dans quelle condition hémodynamique entend-on typiquement un galop présystolique B4 ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Lors de la contraction de l'oreillette contre un ventricule gauche épaissi et rigide (ex: cardiopathie hypertensive ou rétrécissement aortique)", is_correct: true },
+          { id: "B", text: "En cas de fibrillation atriale avec perte de la contraction auriculaire", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Le B4 est généré par la systole atriale forçant le sang dans un ventricule non compliant. Il disparaît en cas de fibrillation atriale !",
+        reference: "[Coustet] p.68",
+        tags: "B4,galop,compliance",
+      },
+      {
+        lesson_id: lesson3_4.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "VRAI_FAUX",
+        room_number: 2,
+        room_type: "standard",
+        question_fr: "VRAI ou FAUX : La manœuvre de Rivero-Carvallo (inspiration profonde) augmente l'intensité des souffles du cœur droit (ex: insuffisance tricuspide) grâce à l'augmentation du retour veineux.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Vrai ! La positivité du signe de Rivero-Carvallo signe l'origine droite d'un souffle régurgitant.",
+        reference: "[Bariéty] p.138",
+        tags: "rivero_carvallo,cœur_droit",
+      },
+      {
+        lesson_id: lesson3_4.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "QCM",
+        room_number: 3,
+        room_type: "guardian",
+        question_fr: "Quel bruit stéthacoustique surajouté est classiquement comparé au froissement de cuir neuf ou de soie ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Le frottement péricardique", is_correct: true },
+          { id: "B", text: "Le clic d'ouverture mitrale", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Le frottement péricardique a un timbre râpeux caractéristique de cuir neuf persistant en apnée.",
+        reference: "[Coustet] p.64",
+        tags: "frottement,auscultation",
+      },
+    ],
+  });
+
+  // 3.5 Boss 3 : La Gargouille Valvulaire
+  const boss3 = await prisma.lesson.create({
+    data: {
+      module_id: module3.id,
+      slug: "boss-gargouille-valvulaire",
+      nom_fr: "👑 Boss Chapitre 3 : La Gargouille Valvulaire de Pierre",
+      description_fr: "Combat en 5 salles multi-phases : Foyers d'auscultation, manœuvres respiratoires, signes périphériques et quantification échographique Doppler !",
+      niveau_difficulte: 3,
+      ordre_affichage: 5,
+      xp_reward: 140,
+      gems_reward: 45,
+      dungeon_type: "boss",
+      boss_name: "Gargouille Valvulaire de Pierre",
+      boss_avatar: "🗿🩺",
+      rooms_count: 5,
+      cours_intro_fr: "La Gargouille scelle les flux intracardiaques de son stéthoscope de pierre. Discerne chaque vibration pour libérer les orifices valvulaires d'Aethelgard !",
+      cours_points_cles_fr: "1. Positionner le stéthoscope au bon foyer.\n2. Différencier systole et diastole.\n3. Utiliser la manœuvre de Rivero-Carvallo.\n4. Reconnaître les signes périphériques d'hyperpulsatilité.\n5. Interpréter l'échocardiographie Doppler.",
+      mnemonique: "Écouter avec précision, classifier sans hésiter !",
+    },
+  });
+
+  await prisma.card.createMany({
+    data: [
+      {
+        lesson_id: boss3.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "CAS_CLINIQUE",
+        room_number: 1,
+        room_type: "boss_phase_1",
+        contexte_clinique: "PHASE 1 - SOUFFLE ÉJECTIONNEL : La Gargouille projette un patient de 82 ans ayant fait une syncope à l'effort. Vous auscultez un souffle méso-systolique 4/6 au 2e EIC droit irradiant aux carotides avec abolition de B2.",
+        question_fr: "Quelle valvulopathie obstructive critique est responsable de cette syncope ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Un rétrécissement aortique calcifié très serré", is_correct: true },
+          { id: "B", text: "Une insuffisance mitrale fonctionnelle", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Frappe réussie ! Syncope d'effort + souffle aortique râpeux + B2 aboli = Rétrécissement aortique serré symptomatique.",
+        reference: "[Coustet] p.70",
+        tags: "boss3,phase1",
+      },
+      {
+        lesson_id: boss3.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "QCM",
+        room_number: 2,
+        room_type: "boss_phase_2",
+        contexte_clinique: "PHASE 2 - MANŒUVRE RESPIRATOIRE : Vous auscultez un souffle holosystolique à l'appendice xiphoïde dont l'intensité augmente nettement lors d'une inspiration profonde.",
+        question_fr: "Quelle valvulopathie est affirmée par cette positivité de la manœuvre de Rivero-Carvallo ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Une insuffisance tricuspidienne", is_correct: true },
+          { id: "B", text: "Une insuffisance mitrale", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Coup critique ! L'inspiration augmente le retour veineux au cœur droit et majore le souffle d'insuffisance tricuspide (Signe de Rivero-Carvallo).",
+        reference: "[Bariéty] p.138",
+        tags: "boss3,phase2",
+      },
+      {
+        lesson_id: boss3.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "CAS_CLINIQUE",
+        room_number: 3,
+        room_type: "boss_phase_3",
+        contexte_clinique: "PHASE 3 - HYPERPULSATILITÉ : La Gargouille présente un patient avec tension artérielle à 170/50 mmHg (pression pulsée élargie à 120 mmHg) et pouls bondissant de Corrigan.",
+        question_fr: "Quel souffle diastolique devez-vous rechercher le long du bord gauche du sternum ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Un souffle diastolique doux humé aspiratif d'insuffisance aortique", is_correct: true },
+          { id: "B", text: "Un roulement de rétrécissement mitral", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Magistral ! L'élargissement de la différentielle tensionnelle avec pouls de Corrigan signe la régurgitation aortique massive.",
+        reference: "[McGee] p.358",
+        tags: "boss3,phase3",
+      },
+      {
+        lesson_id: boss3.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "VRAI_FAUX",
+        room_number: 4,
+        room_type: "boss_phase_4",
+        contexte_clinique: "PHASE 4 - CRIBLAGE ÉCHOCARDIOGRAPHIQUE : En échocardiographie-Doppler transthoracique (ETT) :",
+        question_fr: "VRAI ou FAUX : Un rétrécissement aortique est défini comme serré lorsque la surface aortique calculée est inférieure à 1.0 cm² (ou < 0.6 cm²/m²) et que le gradient moyen dépasse 40 mmHg.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Parfait ! Les critères de sténose aortique serrée sont Surface < 1 cm² et Gradient moyen > 40 mmHg (Vitesse max > 4 m/s).",
+        reference: "[UNESS-Cardio] p.36",
+        tags: "boss3,phase4",
+      },
+      {
+        lesson_id: boss3.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "QCM",
+        room_number: 5,
+        room_type: "boss_phase_5",
+        contexte_clinique: "PHASE 5 - INDICATION OPÉRATOIRE : Devant ce rétrécissement aortique serré symptomatique (syncope et dyspnée d'effort) :",
+        question_fr: "Quelle prise en charge curative permet d'abattre la Gargouille Valvulaire ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Remplacement valvulaire aortique (chirurgical ou TAVI par voie percutanée)", is_correct: true },
+          { id: "B", text: "Poursuite du traitement médical seul sans intervention", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "VICTOIRE TOTALE ! Le remplacement valvulaire (TAVI ou chirurgie) est l'unique traitement curatif du RA serré symptomatique !",
+        reference: "[ESC Guidelines Valvular Heart Disease]",
+        tags: "boss3,phase5",
+      },
+    ],
+  });
+
+  // =========================================================================
+  // CHAPITRE 4 : TROUBLES DU RYTHME & PALPITATIONS
+  // =========================================================================
+  console.log("⚡ Chapitre 4 : Troubles du Rythme & Palpitations...");
+  const module4 = await prisma.module.create({
+    data: {
+      slug: "chapitre-4-troubles-du-rythme",
+      nom_fr: "Chapitre 4 : Troubles du Rythme & Palpitations",
+      description_fr: "Disséquer la fibrillation atriale, les blocs atrioventriculaires, les tachycardies ventriculaires et vaincre le Dragon Rythmologique.",
+      systeme: "cardio",
+      ordre_affichage: 4,
+      icone: "Zap",
+      color: "yellow",
+    },
+  });
+
+  // 4.1 Fibrillation Atriale
+  const lesson4_1 = await prisma.lesson.create({
+    data: {
+      module_id: module4.id,
+      slug: "fibrillation-atriale-arythmie",
+      nom_fr: "Donjon 4.1 : Fibrillation Atriale (FA) & Arythmie Complète",
+      description_fr: "Bruits du cœur anarchiques, absence d'onde P, risque thromboembolique et score CHA2DS2-VASc.",
+      niveau_difficulte: 2,
+      ordre_affichage: 1,
+      xp_reward: 35,
+      gems_reward: 12,
+      dungeon_type: "standard",
+      boss_name: "Sentinelle de l'Arythmie",
+      rooms_count: 3,
+      cours_intro_fr: "La Fibrillation Atriale (FA) est le trouble du rythme soutenu le plus fréquent. Elle se traduit par une désorganisation électrique totale des oreillettes (absence d'ondes P, réponse ventriculaire irrégulière).",
+      cours_points_cles_fr: "• Clinique : Bruits du cœur et pouls totalement irréguliers dans leur rythme et leur intensité (« arythmie complète »).\n• ECG : Disparition des ondes P remplacées par un trémulation de la ligne isoélectrique, intervalles R-R irréguliers.\n• Score CHA2DS2-VASc : évalue le risque d'AVC ischémique et pose l'indication d'anticoagulation orale.",
+      mnemonique: "CHA2DS2-VASc : IC, HTA, Âge > 75 (2 pts), Diabète, Stroke/AIT (2 pts), Vasculaire, Âge 65-74, Sexe F.",
+    },
+  });
+
+  await prisma.card.createMany({
+    data: [
+      {
+        lesson_id: lesson4_1.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "QCM",
+        room_number: 1,
+        room_type: "standard",
+        question_fr: "Quel aspect stéthacoustique et palpatoire est pathognomonique de la fibrillation atriale non ralentie ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Une arythmie complète avec bruits du cœur et pouls totalement anarchiques et inégaux", is_correct: true },
+          { id: "B", text: "Un rythme parfaitement régulier à 60 bpm", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "L'arythmie complète par fibrillation atriale (ACFA) associe battements irréguliers et variation permanente de l'amplitude du pouls.",
+        reference: "[Coustet] p.78",
+        tags: "FA,arythmie",
+      },
+      {
+        lesson_id: lesson4_1.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "VRAI_FAUX",
+        room_number: 2,
+        room_type: "standard",
+        question_fr: "VRAI ou FAUX : À l'électrocardiogramme (ECG), la fibrillation atriale se caractérise par la disparition des ondes P sinusales et une irrégularité complète des intervalles R-R.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Vrai ! L'absence d'onde P et l'irrégularité des espaces R-R affirment le diagnostic de FA.",
+        reference: "[Bariéty] p.142",
+        tags: "ECG,FA",
+      },
+      {
+        lesson_id: lesson4_1.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "QCM",
+        room_number: 3,
+        room_type: "guardian",
+        question_fr: "Dans le score thromboembolique CHA2DS2-VASc, quels sont les deux critères comptant chacun pour 2 points ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Âge supérieur ou égal à 75 ans ET Antécédent d'AVC / AIT / Embolie", is_correct: true },
+          { id: "B", text: "Hypertension artérielle ET Diabète", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Le 'A2' (Âge >= 75 ans) et le 'S2' (Stroke / AVC) rapportent chacun 2 points dans le calcul du score.",
+        reference: "[ESC Guidelines AF] ; [UNESS-Cardio] p.40",
+        tags: "CHA2DS2VASc,score",
+      },
+    ],
+  });
+
+  // 4.2 Tachycardies & Flutter
+  const lesson4_2 = await prisma.lesson.create({
+    data: {
+      module_id: module4.id,
+      slug: "tachycardies-ventriculaires-flutter",
+      nom_fr: "Donjon 4.2 : Tachycardies Ventriculaires & Flutter Atrial",
+      description_fr: "QRS larges, dissociation auriculo-ventriculaire, aspect en dents de scie (ondes F) et manœuvres vagales.",
+      niveau_difficulte: 2,
+      ordre_affichage: 2,
+      xp_reward: 35,
+      gems_reward: 12,
+      dungeon_type: "standard",
+      boss_name: "Golem de Tachycardie",
+      rooms_count: 3,
+      cours_intro_fr: "Les tachycardies se divisent en tachycardies à QRS fins (jonctionnelles, flutter, FA) et tachycardies à QRS larges (Tachycardie Ventriculaire TV jusqu'à preuve du contraire).",
+      cours_points_cles_fr: "• Tachycardie à QRS larges (> 120 ms) = Tachycardie Ventriculaire (Urgence vitale).\n• Dissociation auriculo-ventriculaire avec complexes de capture et de fusion = Preuve formelle de TV.\n• Flutter Atrial : activité auriculaire rapide et régulière à 300/min en 'dents de scie' (ondes F négatives en DII, DIII, aVF).",
+      mnemonique: "QRS large tachycarde = TV jusqu'à preuve du contraire !",
+    },
+  });
+
+  await prisma.card.createMany({
+    data: [
+      {
+        lesson_id: lesson4_2.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "QCM",
+        room_number: 1,
+        room_type: "standard",
+        question_fr: "Quelle est la règle d'or sémiologique devant toute tachycardie régulière à QRS larges (> 120 ms) chez l'adulte ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "La considérer comme une Tachycardie Ventriculaire (TV) jusqu'à preuve formelle du contraire", is_correct: true },
+          { id: "B", text: "La considérer comme un simple stress anxiogène", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Toute tachycardie à QRS larges est une TV jusqu'à preuve du contraire : risque de dégénérescence en fibrillation ventriculaire fatale.",
+        reference: "[Coustet] p.80",
+        tags: "TV,QRS_larges",
+      },
+      {
+        lesson_id: lesson4_2.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "VRAI_FAUX",
+        room_number: 2,
+        room_type: "standard",
+        question_fr: "VRAI ou FAUX : Le flutter atrial commun se caractérise à l'ECG par des ondes auriculaires F régulières à 300/min sans retour à la ligne isoélectrique, donnant un aspect classique en 'dents de scie' ou 'toit d'usine'.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Vrai ! Les ondes F en dents de scie sont typiques du flutter atrial avec conduction 2/1 (fréquence ventriculaire ~150 bpm).",
+        reference: "[Bariéty] p.144",
+        tags: "flutter,ondes_F",
+      },
+      {
+        lesson_id: lesson4_2.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "CAS_CLINIQUE",
+        room_number: 3,
+        room_type: "guardian",
+        contexte_clinique: "Sur l'ECG d'une tachycardie à QRS larges, vous observez des complexes de capture (QRS fin d'origine sinusale) et des complexes de fusion.",
+        question_fr: "Quelle est la valeur diagnostique de ces complexes de fusion/capture ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Ils affirment formellement le diagnostic de Tachycardie Ventriculaire (dissociation AV)", is_correct: true },
+          { id: "B", text: "Ils indiquent un artefact de mouvement des électrodes", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Les captures et fusions sont pathognomoniques de la dissociation auriculo-ventriculaire dans la tachycardie ventriculaire.",
+        reference: "[UNESS-Cardio] p.44",
+        tags: "capture,fusion,TV",
+      },
+    ],
+  });
+
+  // 4.3 Bradycardies & BAV
+  const lesson4_3 = await prisma.lesson.create({
+    data: {
+      module_id: module4.id,
+      slug: "bradycardies-blocs-atrioventriculaires-bav",
+      nom_fr: "Donjon 4.3 : Bradycardies & Blocs Atrio-Ventriculaires (BAV)",
+      description_fr: "BAV 1er degré, Mobitz I (Wenckebach), Mobitz II et BAV 3e degré complet avec échappement.",
+      niveau_difficulte: 2,
+      ordre_affichage: 3,
+      xp_reward: 35,
+      gems_reward: 12,
+      dungeon_type: "standard",
+      boss_name: "Sentinelle de la Conduction",
+      rooms_count: 3,
+      cours_intro_fr: "Les blocs atrio-ventriculaires (BAV) traduisent un ralentissement ou une interruption de la conduction électrique entre les oreillettes et les ventricules.",
+      cours_points_cles_fr: "• BAV 1 : Allongement fixe de l'espace PR > 200 ms (toutes les ondes P sont conduites).\n• BAV 2 Mobitz I (Wenckebach) : Allongement progressif du PR jusqu'à une onde P bloquée.\n• BAV 2 Mobitz II : Blocage inopiné d'une onde P avec PR constant (Haut risque de syncope).\n• BAV 3 (Complet) : Dissociation atrio-ventriculaire totale (ondes P indépendantes des QRS, rythme d'échappement lent).",
+      mnemonique: "BAV 3 = Dissociation complète : Pacemaker en urgence !",
+    },
+  });
+
+  await prisma.card.createMany({
+    data: [
+      {
+        lesson_id: lesson4_3.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "QCM",
+        room_number: 1,
+        room_type: "standard",
+        question_fr: "Quelle est la définition électrocardiographique stricte du BAV du 1er degré chez l'adulte ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Un allongement constant de l'intervalle PR supérieur à 200 ms (0.20 sec), chaque onde P étant suivie d'un QRS", is_correct: true },
+          { id: "B", text: "La survenue d'ondes P bloquées intermittentes", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Le BAV 1 correspond à un simple retard nodal sans aucune onde P bloquée (PR > 200 ms).",
+        reference: "[Coustet] p.82",
+        tags: "BAV1,PR",
+      },
+      {
+        lesson_id: lesson4_3.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "VRAI_FAUX",
+        room_number: 2,
+        room_type: "standard",
+        question_fr: "VRAI ou FAUX : Le BAV du 2e degré Mobitz II (avec blocage inopiné d'ondes P sans allongement préalable du PR) est une situation à haut risque de passage en BAV complet nécessitant l'implantation d'un stimulateur cardiaque (pacemaker).",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Vrai ! Le Mobitz II est un bloc infra-nodal instable à haut risque de syncope d'Adams-Stokes et d'asystolie.",
+        reference: "[UNESS-Cardio] p.46",
+        tags: "mobitz2,pacemaker",
+      },
+      {
+        lesson_id: lesson4_3.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "CAS_CLINIQUE",
+        room_number: 3,
+        room_type: "guardian",
+        contexte_clinique: "Un homme de 80 ans fait une syncope brutale à l'emporte-pièce. À l'ECG, la fréquence atriale (ondes P) est à 80/min et la fréquence ventriculaire (QRS larges) est à 32/min, totalement indépendantes l'une de l'autre.",
+        question_fr: "Quel diagnostic de trouble conductif majeur portez-vous ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Un BAV du 3e degré (complet) avec rythme d'échappement ventriculaire lent", is_correct: true },
+          { id: "B", text: "Une simple bradycardie sinusale du sportif", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Dissociation totale entre ondes P et QRS avec bradycardie sévère = BAV 3 complet (urgence d'entraînement électrosystolique et pacemaker).",
+        reference: "[Bariéty] p.146",
+        tags: "BAV3,dissociation",
+      },
+    ],
+  });
+
+  // 4.4 Syncopes
+  const lesson4_4 = await prisma.lesson.create({
+    data: {
+      module_id: module4.id,
+      slug: "syncopes-malaises-cardiaques",
+      nom_fr: "Donjon 4.4 : Syncopes & Malaises Cardiaques",
+      description_fr: "Syncope à l'emporte-pièce (Adams-Stokes), syncope d'effort et critères d'orientation clinique.",
+      niveau_difficulte: 2,
+      ordre_affichage: 4,
+      xp_reward: 35,
+      gems_reward: 12,
+      dungeon_type: "standard",
+      boss_name: "Sentinelle de la Conscience",
+      rooms_count: 3,
+      cours_intro_fr: "La syncope est une perte de connaissance brève, complète, avec récupération spontanée rapide liée à une hypoperfusion cérébrale globale transitoire.",
+      cours_points_cles_fr: "• Syncope à l'emporte-pièce sans prodrome (Syndrome d'Adams-Stokes) = BAV complet ou TV paroxystique.\n• Syncope survenant à l'effort = Rétrécissement aortique serré ou cardiomyopathie hypertrophique (CMH).\n• Syncope avec prodromes (sueurs, nausées, bâillements) chez le sujet jeune en position debout prolongée = Malaise vasovagal bénin.",
+      mnemonique: "Syncope à l'effort ou sans prodrome = Hospitalisation ECG immédiate !",
+    },
+  });
+
+  await prisma.card.createMany({
+    data: [
+      {
+        lesson_id: lesson4_4.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "QCM",
+        room_number: 1,
+        room_type: "standard",
+        question_fr: "Comment se caractérise le syndrome de Stokes-Adams en sémiologie cardiologique ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Une syncope brutale à l'emporte-pièce sans prodrome avec pâleur initiale suivie d'une rougeur au réveil rapide, due à une pause cardiaque ou BAV complet", is_correct: true },
+          { id: "B", text: "Une crise d'épilepsie avec confusion post-critique prolongée de plus de 30 minutes", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Le syndrome d'Adams-Stokes est la syncope cardiologique paroxystique typique sans avertissement liée à un arrêt temporaire de la commande ventriculaire.",
+        reference: "[Coustet] p.84",
+        tags: "stokes_adams,syncope",
+      },
+      {
+        lesson_id: lesson4_4.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "VRAI_FAUX",
+        room_number: 2,
+        room_type: "standard",
+        question_fr: "VRAI ou FAUX : Une syncope survenant en plein effort physique chez un adulte jeune impose la recherche prioritaire d'un obstacle à l'éjection (rétrécissement aortique, cardiomyopathie hypertrophique CMH) ou d'une anomalie du rythme (syndrome de Brugada, QT long).",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Vrai ! La syncope d'effort est un drapeau rouge majeur de mort subite du sportif nécessitant un bilan cardiologique complet.",
+        reference: "[UNESS-Cardio] p.48",
+        tags: "syncope_effort,drapeau_rouge",
+      },
+      {
+        lesson_id: lesson4_4.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "QCM",
+        room_number: 3,
+        room_type: "guardian",
+        question_fr: "Quel examen simple et non invasif doit être réalisé systématiquement au lit du malade devant toute syncope inexpliquée ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Un électrocardiogramme 12 dérivations de repos", is_correct: true },
+          { id: "B", text: "Un scanner cérébral avec injection de produit de contraste", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "L'ECG 12 dérivations est l'examen pivot incontournable de toute perte de connaissance brève.",
+        reference: "[ESC Guidelines Syncope]",
+        tags: "ECG,syncope",
+      },
+    ],
+  });
+
+  // 4.5 Boss 4 : Dragon Rythmologique
+  const boss4 = await prisma.lesson.create({
+    data: {
+      module_id: module4.id,
+      slug: "boss-dragon-rythmologique",
+      nom_fr: "👑 Boss Chapitre 4 : Le Dragon Rythmologique d'Électrode",
+      description_fr: "Combat en 5 salles multi-phases : Interprétation d'arythmie en direct, gestion du BAV 3 complet, Tachycardie Ventriculaire et Cardioversion d'urgence !",
+      niveau_difficulte: 3,
+      ordre_affichage: 5,
+      xp_reward: 150,
+      gems_reward: 50,
+      dungeon_type: "boss",
+      boss_name: "Dragon Rythmologique d'Électrode",
+      boss_avatar: "⚡🐉",
+      rooms_count: 5,
+      cours_intro_fr: "Le Dragon foudroie le système de conduction cardiaque de ses éclairs désordonnés. Dompte les courants électriques d'Aethelgard !",
+      cours_points_cles_fr: "1. Reconnaître l'ACFA.\n2. Évaluer le score CHA2DS2-VASc.\n3. Traiter le BAV 3 symptomatique.\n4. Identifier la TV.\n5. Réaliser le choc électrique externe.",
+      mnemonique: "Rythme, Conduction, Défibrillation : Rétablir l'onde pure !",
+    },
+  });
+
+  await prisma.card.createMany({
+    data: [
+      {
+        lesson_id: boss4.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "CAS_CLINIQUE",
+        room_number: 1,
+        room_type: "boss_phase_1",
+        contexte_clinique: "PHASE 1 - ORAGE AURICULAIRE : Le Dragon libère une tachycardie irrégulière à 160 bpm avec trémulation de la ligne de base sans onde P chez un homme hypertendu de 76 ans.",
+        question_fr: "Quel traitement anticoagulant au long cours devez-vous initier au vu de son score CHA2DS2-VASc >= 2 ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Un Anticoagulant Oral Direct (AOD comme l'Apixaban) ou AVK", is_correct: true },
+          { id: "B", text: "Une simple aspirine à faible dose", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Frappe réussie ! L'anticoagulation curative orale est obligatoire chez l'homme avec score CHA2DS2-VASc >= 2 pour prévenir les embolies systémiques.",
+        reference: "[ESC Guidelines AF]",
+        tags: "boss4,phase1",
+      },
+      {
+        lesson_id: boss4.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "QCM",
+        room_number: 2,
+        room_type: "boss_phase_2",
+        contexte_clinique: "PHASE 2 - BLOCAGE CONDUCTIF : Le rythme chute soudainement à 28 bpm avec dissociation auriculo-ventriculaire totale.",
+        question_fr: "Quel médicament parasympatholytique d'urgence en bolus IV peut accélérer la conduction nodale en attendant la sonde d'entraînement ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "L'Atropine (0.5 à 1 mg IV)", is_correct: true },
+          { id: "B", text: "La Digoxine IV", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Coup critique ! L'atropine bloque l'effet vagal et améliore la conduction du nœud atrio-ventriculaire.",
+        reference: "[Coustet] p.82",
+        tags: "boss4,phase2",
+      },
+      {
+        lesson_id: boss4.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "CAS_CLINIQUE",
+        room_number: 3,
+        room_type: "boss_phase_3",
+        contexte_clinique: "PHASE 3 - DÉCHAÎNEMENT VENTRICULAIRE : Le patient passe brutalement en tachycardie régulière à QRS très larges à 190 bpm avec tension effondrée à 65/40 mmHg.",
+        question_fr: "Quel geste de réanimation électrique d'urgence immédiate devez-vous délivrer ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Un choc électrique externe (Cardioversion synchronisée) en urgence vitale", is_correct: true },
+          { id: "B", text: "Un massage sino-carotidien prolongé", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Magistral ! Une TV mal tolérée sur le plan hémodynamique impose la cardioversion électrique synchronisée immédiate sous sédation.",
+        reference: "[UNESS-Cardio] p.44",
+        tags: "boss4,phase3",
+      },
+      {
+        lesson_id: boss4.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "VRAI_FAUX",
+        room_number: 4,
+        room_type: "boss_phase_4",
+        contexte_clinique: "PHASE 4 - RYTHME SINUSAL RESTAURÉ : Le tracé montre à présent un rythme régulier avec une onde P positive en DII devant chaque QRS fin :",
+        question_fr: "VRAI ou FAUX : Le rythme sinusal normal d'un adulte au repos se situe entre 50 et 100 battements par minute.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Parfait ! La fréquence sinusale physiologique de repos chez l'adulte est comprise entre 50 et 100 bpm.",
+        reference: "[Coustet] p.76",
+        tags: "boss4,phase4",
+      },
+      {
+        lesson_id: boss4.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "QCM",
+        room_number: 5,
+        room_type: "boss_phase_5",
+        contexte_clinique: "PHASE 5 - PROTECTION DÉFINITIVE : Pour protéger définitivement le patient contre le risque de récidive de TV mal tolérée sur cicatrice d'infarctus :",
+        question_fr: "Quel dispositif implantable est indiqué pour terrasser le Dragon Rythmologique ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Un Défibrillateur Automatique Implantable (DAI)", is_correct: true },
+          { id: "B", text: "Un simple enregistreur Holter externe de 24 heures", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "VICTOIRE TOTALE ! Le défibrillateur automatique implantable (DAI) prévient la mort subite par choc électrique interne immédiat !",
+        reference: "[ESC Guidelines Ventricular Arrhythmias]",
+        tags: "boss4,phase5",
+      },
+    ],
+  });
+
+  // =========================================================================
+  // CHAPITRE 5 : VAISSEAUX PÉRIPHÉRIQUES & URGENCES HTA
+  // =========================================================================
+  console.log("🩸 Chapitre 5 : Vaisseaux Périphériques & Urgences HTA...");
+  const module5 = await prisma.module.create({
+    data: {
+      slug: "chapitre-5-vaisseaux-urgences-hta",
+      nom_fr: "Chapitre 5 : Vaisseaux Périphériques & Urgences HTA",
+      description_fr: "Maîtriser la TVP, l'AOMI, l'anévrisme aortique abdominal et terrasser le Seigneur Suprême de l'Aorte.",
+      systeme: "cardio",
+      ordre_affichage: 5,
+      icone: "Shield",
+      color: "purple",
+    },
+  });
+
+  // 5.1 TVP & Homans
+  const lesson5_1 = await prisma.lesson.create({
+    data: {
+      module_id: module5.id,
+      slug: "thrombose-veineuse-profonde-homans",
+      nom_fr: "Donjon 5.1 : Thrombose Veineuse Profonde (TVP) & Embolie Pulmonaire",
+      description_fr: "Signe de Homans, perte du ballottement du mollet, œdème unilatéral et score de Wells.",
+      niveau_difficulte: 2,
+      ordre_affichage: 1,
+      xp_reward: 35,
+      gems_reward: 12,
+      dungeon_type: "standard",
+      boss_name: "Sentinelle Thrombotique",
+      rooms_count: 3,
+      cours_intro_fr: "La Thrombose Veineuse Profonde (TVP) est l'oblitération d'une veine profonde par un thrombus cruorique. Sa complication majeure est l'Embolie Pulmonaire par migration du caillot.",
+      cours_points_cles_fr: "• Signe de Homans : douleur à la dorsiflexion passive du pied.\n• Perte du ballottement passif du mollet et augmentation de circonférence > 3 cm par rapport au côté sain.\n• Score de Wells : oriente vers le dosage des D-dimères ou l'écho-Doppler veineux immédiat.",
+      mnemonique: "TVP = Douleur, Mollet gonflé/chaud, Homans, Risque d'Embolie !",
+    },
+  });
+
+  await prisma.card.createMany({
+    data: [
+      {
+        lesson_id: lesson5_1.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "QCM",
+        room_number: 1,
+        room_type: "standard",
+        question_fr: "Comment met-on en évidence le signe de Homans à l'examen clinique des membres inférieurs ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Par la dorsiflexion passive du pied, qui réveille une douleur vive dans le mollet", is_correct: true },
+          { id: "B", text: "Par l'élévation du bras au-dessus de la tête", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Le signe de Homans est la douleur provoquée au mollet lors de la flexion dorsale du pied.",
+        reference: "[Coustet] p.86",
+        tags: "homans,TVP",
+      },
+      {
+        lesson_id: lesson5_1.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "VRAI_FAUX",
+        room_number: 2,
+        room_type: "standard",
+        question_fr: "VRAI ou FAUX : Un taux plasmatique de D-dimères inférieur à 500 ng/mL (ou ajusté à l'âge chez le sujet de plus de 50 ans) permet d'exclure formellement une TVP chez un patient à probabilité clinique faible ou intermédiaire.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Vrai ! Les D-dimères ont une excellente valeur prédictive négative (> 98 %) permettant d'éliminer la maladie thromboembolique.",
+        reference: "[UNESS-Cardio] p.52",
+        tags: "D-dimères,VPN",
+      },
+      {
+        lesson_id: lesson5_1.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "CAS_CLINIQUE",
+        room_number: 3,
+        room_type: "guardian",
+        contexte_clinique: "Une femme de 45 ans traitée pour TVP du membre inférieur droit présente brutalement une dyspnée aiguë avec point de côté basithoracique droit et tachycardie à 115 bpm.",
+        question_fr: "Quelle complication d'extrême urgence vitale devez-vous diagnostiquer sans délai ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Une embolie pulmonaire par migration du thrombus veineux", is_correct: true },
+          { id: "B", text: "Un pneumothorax sous tension", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Toute dyspnée aiguë chez un patient avec TVP est une embolie pulmonaire jusqu'à preuve du contraire (angioscanner thoracique en urgence).",
+        reference: "[Coustet] p.88",
+        tags: "embolie_pulmonaire,TVP",
+      },
+    ],
+  });
+
+  // 5.2 AOMI & Pouls
+  const lesson5_2 = await prisma.lesson.create({
+    data: {
+      module_id: module5.id,
+      slug: "arteriopathie-obliterante-aomi-pouls",
+      nom_fr: "Donjon 5.2 : Artériopathie Oblitérante (AOMI) & Pouls",
+      description_fr: "Palpation des pouls périphériques, classification de Leriche-Fontaine et Index de Pression Systolique (IPS).",
+      niveau_difficulte: 2,
+      ordre_affichage: 2,
+      xp_reward: 35,
+      gems_reward: 12,
+      dungeon_type: "standard",
+      boss_name: "Golem d'Ischémie Artérielle",
+      rooms_count: 3,
+      cours_intro_fr: "L'Artériopathie Oblitérante des Membres Inférieurs (AOMI) est la sténose athéromateuse des artères des jambes. Elle se dépiste par la palpation systématique de tous les pouls et le calcul de l'IPS.",
+      cours_points_cles_fr: "• Classification de Leriche & Fontaine : Stade 1 = Asymptomatique / Stade 2 = Claudication intermittente d'effort / Stade 3 = Douleurs de décubitus nocturnes / Stade 4 = Troubles trophiques (ulcère artériel, gangrène).\n• Index de Pression Systolique (IPS) = PAS cheville / PAS humérale (Normal : 0.90 à 1.30 ; AOMI si < 0.90).\n• Ischémie aiguë de membre (les 5 P) : Pain, Pallor, Pulselessness, Paresthesia, Paralysis.",
+      mnemonique: "IPS < 0.90 = AOMI ; 5P = Ischémie aiguë opératoire !",
+    },
+  });
+
+  await prisma.card.createMany({
+    data: [
+      {
+        lesson_id: lesson5_2.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "QCM",
+        room_number: 1,
+        room_type: "standard",
+        question_fr: "Quelle valeur de l'Index de Pression Systolique (IPS) à la cheville confirme formellement le diagnostic d'AOMI chez l'adulte ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Un IPS strictement inférieur à 0.90", is_correct: true },
+          { id: "B", text: "Un IPS égal à 1.15", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Un IPS < 0.90 a une sensibilité et spécificité > 95 % pour affirmer l'AOMI sténosante.",
+        reference: "[Coustet] p.90",
+        tags: "IPS,AOMI",
+      },
+      {
+        lesson_id: lesson5_2.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "VRAI_FAUX",
+        room_number: 2,
+        room_type: "standard",
+        question_fr: "VRAI ou FAUX : Dans la classification de Leriche et Fontaine, le stade 3 correspond à l'apparition de douleurs ischémiques de repos en décubitus, obligeant souvent le patient à laisser pendre sa jambe hors du lit.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Vrai ! Les douleurs de décubitus (stade 3) témoignent d'une ischémie critique chronique menaçant la viabilité du membre.",
+        reference: "[Bariéty] p.150",
+        tags: "leriche_fontaine,stade3",
+      },
+      {
+        lesson_id: lesson5_2.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "CAS_CLINIQUE",
+        room_number: 3,
+        room_type: "guardian",
+        contexte_clinique: "Un patient se présente avec une jambe droite brutalement froide, livide, insensible (paresthésies), sans aucun pouls périphérique palpable et douloureuse.",
+        question_fr: "Quel tableau d'extrême urgence chirurgicale de revascularisation devez-vous porter ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Une ischémie aiguë de membre inférieur (Embolie ou thrombose artérielle aiguë)", is_correct: true },
+          { id: "B", text: "Une entorse de la cheville", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Les 5P (Pain, Pallor, Pulselessness, Paresthesia, Paralysis) signent l'ischémie aiguë de membre imposant une embolectomie (sonde de Fogarty) dans les 6 heures.",
+        reference: "[UNESS-Cardio] p.54",
+        tags: "ischémie_aiguë,fogarty",
+      },
+    ],
+  });
+
+  // 5.3 Urgences HTA
+  const lesson5_3 = await prisma.lesson.create({
+    data: {
+      module_id: module5.id,
+      slug: "crise-aigue-hypertensive-retentissement",
+      nom_fr: "Donjon 5.3 : Crise Aiguë Hypertensive & Retentissement Viscéral",
+      description_fr: "HTA maligne, encéphalopathie hypertensive, fond d'œil stade IV et retentissement viscéral aigu.",
+      niveau_difficulte: 2,
+      ordre_affichage: 3,
+      xp_reward: 35,
+      gems_reward: 12,
+      dungeon_type: "standard",
+      boss_name: "Sentinelle de la Pression",
+      rooms_count: 3,
+      cours_intro_fr: "L'urgence hypertensive est définie par une PAS >= 180 mmHg et/ou PAD >= 120 mmHg associée à une souffrance aiguë d'un organe cible (cerveau, cœur, rein, rétine).",
+      cours_points_cles_fr: "• Éléments de souffrance d'organe : Encéphalopathie hypertensive (céphalées en casque, vomissements, confusion), OAP hypertensif, dissection aortique, éclampsie.\n• Rétinopathie hypertensive stade IV : œdème papillaire, exsudats cotonneux et hémorragies.\n• Objectif : Baisse progressive de la pression artérielle de 20 à 25 % dans les premières heures (pas de chute brutale !).",
+      mnemonique: "Urgence HTA = Chiffre élevé + Organe qui souffre !",
+    },
+  });
+
+  await prisma.card.createMany({
+    data: [
+      {
+        lesson_id: lesson5_3.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "QCM",
+        room_number: 1,
+        room_type: "standard",
+        question_fr: "Quelle est la différence sémiologique fondamentale entre une simple 'poussée hypertensive' et une 'urgence hypertensive' ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "La présence d'une atteinte aiguë menaçante d'un organe cible (cerveau, cœur, rein, rétine, aorte)", is_correct: true },
+          { id: "B", text: "Uniquement le chiffre absolu de la pression sans examen clinique", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "C'est la souffrance viscérale aiguë (encéphalopathie, OAP, SCA, dissection, IRA) qui définit l'urgence hypertensive vitale.",
+        reference: "[Coustet] p.92",
+        tags: "HTA,urgence_viscérale",
+      },
+      {
+        lesson_id: lesson5_3.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "VRAI_FAUX",
+        room_number: 2,
+        room_type: "standard",
+        question_fr: "VRAI ou FAUX : Dans l'urgence hypertensive (sauf dissection aortique), il est recommandé de réduire la pression artérielle de 20 à 25 % dans les premières heures sans chercher à la normaliser brutalement afin d'éviter une ischémie cérébrale ou coronarienne par hypoperfusion.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Vrai ! Une baisse trop brutale de la pression dans l'HTA chronique déplace la courbe d'autorégulation et peut provoquer un AVC ischémique iatrogène.",
+        reference: "[UNESS-Cardio] p.56",
+        tags: "HTA,baisse_progressive",
+      },
+      {
+        lesson_id: lesson5_3.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "QCM",
+        room_number: 3,
+        room_type: "guardian",
+        question_fr: "Quelle anomalie du fond d'œil signe le stade IV (stade ultime) de la rétinopathie hypertensive dans l'HTA maligne ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Un œdème papillaire bilatéral avec flou des berges de la papille optique", is_correct: true },
+          { id: "B", text: "Un simple rétrécissement artériel isolé", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "L'œdème papillaire au fond d'œil définit le stade IV de Kirkendall et signe l'HTA maligne.",
+        reference: "[Bates] p.330",
+        tags: "fond_œil,HTA_maligne",
+      },
+    ],
+  });
+
+  // 5.4 AAA
+  const lesson5_4 = await prisma.lesson.create({
+    data: {
+      module_id: module5.id,
+      slug: "anevrisme-aorte-abdominale-aaa",
+      nom_fr: "Donjon 5.4 : Anévrisme de l'Aorte Abdominale & Masse Battante",
+      description_fr: "Masse abdominale battante et expansive, signes de fissuration et échographie de dépistage.",
+      niveau_difficulte: 2,
+      ordre_affichage: 4,
+      xp_reward: 35,
+      gems_reward: 12,
+      dungeon_type: "standard",
+      boss_name: "Sentinelle de l'Aorte Abdominale",
+      rooms_count: 3,
+      cours_intro_fr: "L'Anévrisme de l'Aorte Abdominale (AAA) est la dilatation localisée du calibre aortique (> 30 mm ou > 50 % du diamètre normal). Il est le plus souvent sous-rénal.",
+      cours_points_cles_fr: "• Examen physique : Masse médiane sus-ombilicale, battante (au rythme du cœur) et expansive (écartant les deux mains lors de la palpation bimanuelle).\n• Fissuration / Rupture : Triade classique (Douleur abdominale ou lombaire brutale + Masse battante + État de choc hémodynamique).\n• Échographie abdominale : Examen de dépistage et de surveillance de référence.",
+      mnemonique: "AAA = Masse battante ET expansive !",
+    },
+  });
+
+  await prisma.card.createMany({
+    data: [
+      {
+        lesson_id: lesson5_4.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "QCM",
+        room_number: 1,
+        room_type: "standard",
+        question_fr: "Quel caractère sémiologique fondamental à la palpation bimanuelle permet de distinguer avec certitude un anévrisme aortique abdominal d'une masse transmise par l'aorte ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Le caractère expansif (la masse écarte activement les deux mains de l'examinateur à chaque systole)", is_correct: true },
+          { id: "B", text: "Le caractère totalement fixe et non mobile", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Une masse simplement transmise est soulevée d'arrière en avant ; un anévrisme est battant ET expansif dans toutes les directions (expansion latérale).",
+        reference: "[Coustet] p.94 ; [McGee] p.370",
+        tags: "AAA,expansivité",
+      },
+      {
+        lesson_id: lesson5_4.id,
+        systeme: "cardio",
+        niveau_difficulte: 2,
+        type_question: "VRAI_FAUX",
+        room_number: 2,
+        room_type: "standard",
+        question_fr: "VRAI ou FAUX : Le seuil de diamètre aortique à partir duquel une indication chirurgicale de cure d'AAA sous-rénal asymptomatique est posée est généralement de 50 à 55 mm.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Vrai ! Le risque de rupture augmente exponentiellement au-delà de 50-55 mm de diamètre transversal.",
+        reference: "[UNESS-Cardio] p.58",
+        tags: "AAA,diamètre_opératoire",
+      },
+      {
+        lesson_id: lesson5_4.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "CAS_CLINIQUE",
+        room_number: 3,
+        room_type: "guardian",
+        contexte_clinique: "Un homme de 70 ans porteur d'un AAA connu est amené pour une douleur lombaire gauche brutale et intolérable avec malaise, pâleur extrême et tension à 70/40 mmHg.",
+        question_fr: "Quelle complication cataclysmique devez-vous suspecter et transférer au bloc opératoire sans délai ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Une rupture d'anévrisme de l'aorte abdominale dans le rétropéritoine", is_correct: true },
+          { id: "B", text: "Une colique néphrétique bénigne", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Douleur lombaire + choc hémodynamique + terrain d'AAA = Rupture aortique rétro-péritonéale (urgence chirurgicale absolue).",
+        reference: "[Bariéty] p.154",
+        tags: "rupture_AAA,urgence",
+      },
+    ],
+  });
+
+  // 5.5 Boss Ultime Monde 1 : Le Seigneur de l'Aorte
+  const boss5 = await prisma.lesson.create({
+    data: {
+      module_id: module5.id,
+      slug: "boss-seigneur-aorte",
+      nom_fr: "👑 Boss Ultime Monde 1 : Le Seigneur Suprême de l'Aorte",
+      description_fr: "Le combat final du Monde Cardiovasculaire en 5 salles multi-phases : Synthèse totale des urgences vasculaires, de l'ischémie, de l'insuffisance cardiaque et de l'auscultation !",
+      niveau_difficulte: 3,
+      ordre_affichage: 5,
+      xp_reward: 200,
+      gems_reward: 60,
+      dungeon_type: "boss",
+      boss_name: "Seigneur Suprême de l'Aorte",
+      boss_avatar: "👑🩸",
+      rooms_count: 5,
+      cours_intro_fr: "Le Maître Suprême des Vaisseaux d'Aethelgard se dresse devant toi. Déploie toute la science sémiologique acquise dans le Monde 1 pour purifier définitivement le Royaume Cardiovasculaire !",
+      cours_points_cles_fr: "1. Diagnostic éclair des 4 urgences PIED.\n2. Reconnaissance des souffles et des galops B3/B4.\n3. Analyse des troubles conductifs et rythmiques.\n4. Sauvetage vasculaire et hémodynamique d'urgence.",
+      mnemonique: "Purification totale du Monde 1 : Gloire au Héros d'Aethelgard !",
+    },
+  });
+
+  await prisma.card.createMany({
+    data: [
+      {
+        lesson_id: boss5.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "CAS_CLINIQUE",
+        room_number: 1,
+        room_type: "boss_phase_1",
+        contexte_clinique: "PHASE 1 - L'ÉPREUVE DES 4 FLÉAUX : Le Seigneur de l'Aorte invoque une douleur dorsale déchirante descendante avec asymétrie tensionnelle de 35 mmHg entre les deux bras.",
+        question_fr: "Quelle urgence vitale aortique devez-vous nommer pour briser son premier bouclier ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "La dissection aiguë de l'aorte thoracique", is_correct: true },
+          { id: "B", text: "Une péricardite aiguë bénigne", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Frappe divine ! L'irradiation dorsale descendante et l'asymétrie de tension signent la dissection aortique.",
+        reference: "[Coustet] p.54",
+        tags: "boss5,phase1",
+      },
+      {
+        lesson_id: boss5.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "QCM",
+        room_number: 2,
+        room_type: "boss_phase_2",
+        contexte_clinique: "PHASE 2 - L'ÉPREUVE ACOUSTIQUE : Un souffle méso-systolique 4/6 rude au 2e EIC droit irradiant aux carotides avec abolition de B2.",
+        question_fr: "Quelle anomalie valvulaire identifiez-vous ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Un rétrécissement aortique serré", is_correct: true },
+          { id: "B", text: "Une insuffisance mitrale", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Coup critique ! L'éjection aortique sténosée projette le souffle vers les carotides avec disparition de A2.",
+        reference: "[Bariéty] p.134",
+        tags: "boss5,phase2",
+      },
+      {
+        lesson_id: boss5.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "CAS_CLINIQUE",
+        room_number: 3,
+        room_type: "boss_phase_3",
+        contexte_clinique: "PHASE 3 - L'ÉPREUVE ÉLECTRIQUE : Le Seigneur de l'Aorte déclenche une dissociation atrioventriculaire complète avec fréquence ventriculaire à 30 bpm et syncope d'Adams-Stokes.",
+        question_fr: "Quel traitement électrophysiologique définitif rétablira la conduction cardiaque ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "L'implantation d'un stimulateur cardiaque définitif (Pacemaker)", is_correct: true },
+          { id: "B", text: "La prescription de bêtabloquants", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Magistral ! Le BAV 3 complet symptomatique impose la pose d'un pacemaker définitif.",
+        reference: "[UNESS-Cardio] p.46",
+        tags: "boss5,phase3",
+      },
+      {
+        lesson_id: boss5.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "VRAI_FAUX",
+        room_number: 4,
+        room_type: "boss_phase_4",
+        contexte_clinique: "PHASE 4 - L'ÉPREUVE VASCULAIRE : Chez un patient avec claudication intermittente du mollet à 150 mètres :",
+        question_fr: "VRAI ou FAUX : Un Index de Pression Systolique (IPS) mesuré à 0.65 confirme une artériopathie oblitérante des membres inférieurs (AOMI) modérée à sévère.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Parfait ! Un IPS < 0.90 affirme l'AOMI, et une valeur entre 0.40 et 0.70 signe une sténose artérielle significative.",
+        reference: "[Coustet] p.90",
+        tags: "boss5,phase4",
+      },
+      {
+        lesson_id: boss5.id,
+        systeme: "cardio",
+        niveau_difficulte: 3,
+        type_question: "QCM",
+        room_number: 5,
+        room_type: "boss_phase_5",
+        contexte_clinique: "PHASE 5 - LE SACRE DU SÉMIOLOGUE : Le Seigneur de l'Aorte s'effondre. Vous devez poser le geste ultime face à un choc cardiogénique avec OAP massif.",
+        question_fr: "Quelle triade thérapeutique de sauvetage immédiat délivre la victoire totale sur le Monde 1 ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Position assise + Furosémide IV + Dobutamine IV + Revascularisation coronaire d'urgence", is_correct: true },
+          { id: "B", text: "Décubitus dorsal strict et arrêt de tout traitement", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "VICTOIRE LÉGENDAIRE SUR LE MONDE 1 ! Tu as triomphé des 5 Chapitres et terrassé le Seigneur de l'Aorte ! Aethelgard chante tes louanges !",
+        reference: "[Traité de Sémiologie d'Aethelgard]",
+        tags: "boss5,phase5,victoire_monde_1",
+      },
+    ],
+  });
+
+  // Progression initiale de l'utilisateur démo
   await prisma.userLessonProgress.create({
     data: {
       user_id: demoUser.id,
@@ -1418,7 +2325,7 @@ D'après les traités de sémiologie médicale (*Coustet p.48, Bariéty p.110*) 
     },
   });
 
-  console.log("✅ Injection exhaustive terminée avec succès !");
+  console.log("✅ Déploiement exhaustif des 5 Chapitres & 5 Boss terminé avec succès !");
 }
 
 main()
