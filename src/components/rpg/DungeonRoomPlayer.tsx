@@ -723,14 +723,32 @@ export default function DungeonRoomPlayer({
 
       {/* 5. RÉPLIQUES DU JOUEUR / CHOIX DE CONDUITE DIAGNOSTIQUE */}
       <div className="space-y-2.5">
-        <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-1 flex items-center gap-1.5">
-          <MessageSquare className="w-3.5 h-3.5 text-amber-400" />
-          <span>Ta Réplique & Conduite Médicale :</span>
+        <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-1 flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <MessageSquare className="w-3.5 h-3.5 text-amber-400" />
+            <span>Ta Réplique & Conduite Médicale :</span>
+          </div>
+          {!isTypingComplete && (
+            <span className="text-[9px] text-amber-400/80 italic animate-pulse">
+              Écoute du patient en cours...
+            </span>
+          )}
         </div>
 
-        {/* QCM & CAS CLINIQUE */}
-        {(currentCard.type_question === "QCM" || currentCard.type_question === "CAS_CLINIQUE") && (
-          <div className="space-y-2.5">
+        {/* Si le dialogue est encore en train de s'écrire */}
+        {!isTypingComplete && (
+          <button
+            onClick={handleSkipTyping}
+            className="w-full py-6 rounded-2xl border-2 border-dashed border-slate-800/80 bg-slate-950/40 text-slate-400 hover:text-white hover:border-amber-400/40 transition-all flex flex-col items-center justify-center gap-1 text-xs"
+          >
+            <span className="animate-bounce">💬</span>
+            <span className="font-bold text-[11px]">Le patient termine d&apos;expliquer ses symptômes... (Cliquer pour répondre)</span>
+          </button>
+        )}
+
+        {/* QCM & CAS CLINIQUE (Apparaissent au fur et à mesure) */}
+        {isTypingComplete && (currentCard.type_question === "QCM" || currentCard.type_question === "CAS_CLINIQUE") && (
+          <div className="space-y-2.5 animate-bounce-short">
             {parsedOptions.map((opt: any, optIdx: number) => {
               const isEliminated = eliminatedOptions.includes(opt.id);
               const isSelected = selectedOption === opt.id;
@@ -756,11 +774,12 @@ export default function DungeonRoomPlayer({
                     setSelectedOption(opt.id);
                     playRetroSound("click");
                   }}
-                  className={`w-full p-4 rounded-2xl border-2 text-left font-bold text-xs md:text-sm transition-all flex items-center justify-between transform active:scale-98 ${
+                  className={`w-full p-4 rounded-2xl border-2 text-left font-bold text-xs md:text-sm transition-all flex items-center justify-between transform active:scale-98 animate-bounce-short ${
                     isSelected
                       ? "border-amber-400 bg-amber-500/15 text-white shadow-xl shadow-amber-500/15 scale-[1.01]"
                       : "border-slate-800 bg-slate-950/80 text-slate-300 hover:border-slate-700 hover:bg-slate-900"
                   }`}
+                  style={{ animationDelay: `${optIdx * 80}ms` }}
                 >
                   <div className="flex items-center gap-2.5">
                     <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${
@@ -786,9 +805,9 @@ export default function DungeonRoomPlayer({
         )}
 
         {/* VRAI / FAUX */}
-        {currentCard.type_question === "VRAI_FAUX" && (
-          <div className="grid grid-cols-2 gap-3">
-            {["VRAI", "FAUX"].map((val) => {
+        {isTypingComplete && currentCard.type_question === "VRAI_FAUX" && (
+          <div className="grid grid-cols-2 gap-3 animate-bounce-short">
+            {["VRAI", "FAUX"].map((val, vIdx) => {
               const isSelected = selectedOption === val;
               return (
                 <button
@@ -803,6 +822,7 @@ export default function DungeonRoomPlayer({
                       ? "border-amber-400 bg-amber-500/20 text-amber-300 shadow-xl shadow-amber-500/20 scale-[1.02]"
                       : "border-slate-800 bg-slate-950/80 text-slate-300 hover:border-slate-700 hover:bg-slate-900"
                   }`}
+                  style={{ animationDelay: `${vIdx * 100}ms` }}
                 >
                   {val === "VRAI" ? "🛡️ VRAI" : "⚔️ FAUX"}
                 </button>
