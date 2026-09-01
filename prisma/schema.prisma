@@ -23,12 +23,24 @@ model User {
   last_activity_date  DateTime?
   
   // Champs RPG & Gamification Med-Retro
-  character_class      String?              @default("clerc") // "clerc", "alchimiste", "mage_ecg", "moine"
+  character_class      String?              @default("clerc") // clerc, alchimiste, mage_ecg, moine, necromancien, enchanteuse, chasseur, gardien
   avatar_id            String?              @default("clerc_1")
   current_title        String?              @default("Initié Sémiologue")
   unlocked_titles_json String?              @default("[\"Initié Sémiologue\"]")
-  inventory_json       String?              @default("[\"stethoscope_bronze\"]")
-  mana_points          Int                  @default(100)
+  inventory_json       String?              @default("[\"stethoscope_bronze\", \"potion_soin\"]")
+  
+  // Jauges RPG
+  hp_current           Int                  @default(100)
+  hp_max               Int                  @default(100)
+  mana_current         Int                  @default(100)
+  mana_max             Int                  @default(200)
+  gems                 Int                  @default(50)
+  unlocked_spells_json String?              @default("[\"fifty_fifty\", \"hint_light\", \"vital_regain\"]")
+  active_companion     String?              @default("dr_heart")
+  
+  // Skips & Quêtes
+  skip_count_today     Int                  @default(0)
+  last_skip_date       DateTime?
   
   created_at          DateTime             @default(now())
   updated_at          DateTime             @updatedAt
@@ -63,6 +75,13 @@ model Lesson {
   niveau_difficulte   Int                  @default(1)
   ordre_affichage     Int                  @default(1)
   xp_reward           Int                  @default(25)
+  gems_reward         Int                  @default(10)
+  
+  // Métadonnées Donjon RPG
+  dungeon_type        String               @default("standard") // "tutorial", "standard", "boss", "ghost_srs"
+  boss_name           String?
+  boss_avatar         String?
+  rooms_count         Int                  @default(4)
   
   // Contenu pédagogique enrichi (Micro-cours adaptatif)
   cours_intro_fr      String?              // Résumé essentiel
@@ -96,6 +115,11 @@ model Card {
   reference         String             // Ex: "[UNESS-Cardio] p.12-14 ; [Coustet] p.35"
   tags              String?
   illustration_url  String?
+  
+  // Salles de Donjon
+  room_number       Int                @default(1) // Salle 1, 2, 3, 4, 5 (Boss)
+  room_type         String?            @default("standard") // "qcm_basic", "audio_true_false", "association", "clinical_case", "boss_guardian"
+  
   created_at        DateTime           @default(now())
   updated_at        DateTime           @updatedAt
   lesson            Lesson             @relation(fields: [lesson_id], references: [id], onDelete: Cascade)

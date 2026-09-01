@@ -1,28 +1,160 @@
 import { RpgSpell } from "./types";
 
-export const RPG_SPELLS: Record<string, RpgSpell> = {
-  clarity: {
-    id: "clarity",
-    name: "Sort de Clarté",
-    manaCost: 30,
-    description: "Élimine une option incorrecte pour faciliter le diagnostic.",
+export const UNIVERSAL_SPELLS: Record<string, RpgSpell> = {
+  fifty_fifty: {
+    id: "fifty_fifty",
+    name: "Sort 50/50",
+    manaCost: 40,
+    description: "Élimine la moitié des mauvaises réponses d'un coup.",
     icon: "Sparkles",
-    effectType: "eliminate_wrong",
+    effectType: "fifty_fifty",
   },
-  grimoire: {
-    id: "grimoire",
-    name: "Consultation du Grimoire",
-    manaCost: 45,
-    description: "Révèle le moyen mnémotechnique de la leçon sans malus d'XP.",
+  hint_light: {
+    id: "hint_light",
+    name: "Indice Léger",
+    manaCost: 30,
+    description: "Affiche un premier indice d'orientation clinique.",
+    icon: "Lightbulb",
+    effectType: "hint_light",
+  },
+  hint_heavy: {
+    id: "hint_heavy",
+    name: "Indice Majeur (Mnémo)",
+    manaCost: 60,
+    description: "Dévoile la règle sémiologique et le moyen mnémotechnique associé.",
     icon: "BookOpen",
     effectType: "show_mnemonic",
   },
-  vital_boost: {
-    id: "vital_boost",
-    name: "Regain Vital",
-    manaCost: 60,
-    description: "Restaure 1 point de vie (cœur) en cas de difficulté.",
+  pause_timer: {
+    id: "pause_timer",
+    name: "Pause Temporelle (10s)",
+    manaCost: 25,
+    description: "Fige le chronomètre pendant 10 secondes pour réfléchir au calme.",
+    icon: "Hourglass",
+    effectType: "pause_timer",
+  },
+  slow_timer: {
+    id: "slow_timer",
+    name: "Ralentissement (50%)",
+    manaCost: 50,
+    description: "Réduit la vitesse du compte à rebours de 50 % sur cette salle.",
+    icon: "Clock",
+    effectType: "slow_timer",
+  },
+  vital_regain: {
+    id: "vital_regain",
+    name: "Potion de Vie (+25 PV)",
+    manaCost: 80,
+    description: "Restaure immédiatement 25 points de vie en cas de coup dur.",
     icon: "Heart",
-    effectType: "restore_heart",
+    effectType: "restore_hp",
+  },
+  glossary_unlimited: {
+    id: "glossary_unlimited",
+    name: "Grimoire Ouvert",
+    manaCost: 150,
+    description: "Débloque la consultation illimitée du glossaire pour tout le donjon.",
+    icon: "BookMarked",
+    effectType: "glossary_free",
   },
 };
+
+export const CLASS_SPELLS: Record<string, RpgSpell> = {
+  divine_diagnosis: {
+    id: "divine_diagnosis",
+    name: "Diagnostic Divin",
+    manaCost: 0,
+    cooldownBattles: 3,
+    isClassSpell: true,
+    classId: "clerc",
+    description: "Révèle et élimine instantanément une mauvaise option.",
+    icon: "Sparkles",
+    effectType: "fifty_fifty",
+  },
+  spectral_analysis: {
+    id: "spectral_analysis",
+    name: "Analyse Spectrale",
+    manaCost: 0,
+    cooldownBattles: 2,
+    isClassSpell: true,
+    classId: "alchimiste",
+    description: "Active un 50/50 gratuit sans dépenser de mana.",
+    icon: "FlaskConical",
+    effectType: "fifty_fifty",
+  },
+  temporal_vision: {
+    id: "temporal_vision",
+    name: "Vision Temporelle",
+    manaCost: 0,
+    cooldownBattles: 3,
+    isClassSpell: true,
+    classId: "mage_ecg",
+    description: "Ralentit le timer de 50 % pour toute la salle.",
+    icon: "Zap",
+    effectType: "slow_timer",
+  },
+  iron_stance: {
+    id: "iron_stance",
+    name: "Posture de Fer",
+    manaCost: 0,
+    cooldownBattles: 2,
+    isClassSpell: true,
+    classId: "moine",
+    description: "Ignore les dégâts de la prochaine erreur.",
+    icon: "Shield",
+    effectType: "ignore_damage",
+  },
+  resurrection: {
+    id: "resurrection",
+    name: "Défibrillation d'Âme",
+    manaCost: 0,
+    cooldownBattles: 4,
+    isClassSpell: true,
+    classId: "necromancien",
+    description: "Ressuscite avec 25 PV en cas de game over (1x/jour).",
+    icon: "ShieldAlert",
+    effectType: "resurrection",
+  },
+  mental_clarity: {
+    id: "mental_clarity",
+    name: "Clarté Mentale",
+    manaCost: 0,
+    cooldownBattles: 3,
+    isClassSpell: true,
+    classId: "enchanteuse",
+    description: "Restaure immédiatement +30 PV.",
+    icon: "Brain",
+    effectType: "restore_hp",
+  },
+  truth_arrow: {
+    id: "truth_arrow",
+    name: "Flèche de Vérité",
+    manaCost: 0,
+    cooldownBattles: 2,
+    isClassSpell: true,
+    classId: "chasseur",
+    description: "Confirme la validité d'une réponse Vrai/Faux avant validation.",
+    icon: "Wind",
+    effectType: "reveal_answer",
+  },
+  wisdom_shield: {
+    id: "wisdom_shield",
+    name: "Bouclier de Sagesse",
+    manaCost: 0,
+    cooldownBattles: 3,
+    isClassSpell: true,
+    classId: "gardien",
+    description: "Immunité totale aux dégâts pendant 20 secondes.",
+    icon: "ShieldCheck",
+    effectType: "ignore_damage",
+  },
+};
+
+export function getSpellConfig(spellId: string): RpgSpell | null {
+  if (spellId in UNIVERSAL_SPELLS) return UNIVERSAL_SPELLS[spellId];
+  if (spellId in CLASS_SPELLS) return CLASS_SPELLS[spellId];
+  return null;
+}
+
+export const RPG_SPELLS = UNIVERSAL_SPELLS;
+

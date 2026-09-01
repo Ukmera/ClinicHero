@@ -111,7 +111,7 @@ async function main() {
   }
 
   // ==========================================
-  // 2. UTILISATEUR DÉMO
+  // 2. UTILISATEUR DÉMO AVEC STATS RPG
   // ==========================================
   const password_hash = await bcrypt.hash("clinichero123", 10);
   const demoUser = await prisma.user.create({
@@ -126,8 +126,121 @@ async function main() {
       xp_total: 120,
       user_level: 2,
       streak_days: 3,
+      hp_current: 100,
+      hp_max: 100,
+      mana_current: 100,
+      mana_max: 200,
+      gems: 50,
+      character_class: "clerc",
+      avatar_id: "clerc_1",
+      current_title: "Initié Sémiologue",
       last_activity_date: new Date(),
     },
+  });
+
+  // ==========================================
+  // MONDE 0 : SANCTUAIRE D'INITIATION (TUTO)
+  // ==========================================
+  console.log("🧙‍♂️ Monde 0 : Sanctuaire d'Initiation & La Grande Blouse...");
+  const module0 = await prisma.module.create({
+    data: {
+      slug: "monde-0-tutoriel",
+      nom_fr: "Monde 0 : Sanctuaire d'Initiation",
+      description_fr: "Fais tes premiers pas avec La Grande Blouse, apprends à gérer tes PV/Mana et lance ton premier sort de diagnostic !",
+      systeme: "tutoriel",
+      ordre_affichage: 0,
+      icone: "Sparkles",
+      color: "amber",
+    },
+  });
+
+  const lesson0_1 = await prisma.lesson.create({
+    data: {
+      module_id: module0.id,
+      slug: "tutoriel-la-grande-blouse",
+      nom_fr: "L'Éveil du Sémiologue & La Grande Blouse",
+      description_fr: "Découvre les secrets du royaume d'Aethelgard, tes jauges de vitalité et la puissance de ton grimoire arcanique.",
+      niveau_difficulte: 1,
+      ordre_affichage: 1,
+      xp_reward: 50,
+      gems_reward: 25,
+      dungeon_type: "tutorial",
+      boss_name: "Spectre de l'Ignorance Novice",
+      boss_avatar: "👻",
+      rooms_count: 3,
+      cours_intro_fr: "Bienvenue à Aethelgard ! En tant qu'Initié, ton stéthoscope et ton sens clinique sont tes meilleures armes contre les erreurs médicales.",
+      cours_detaille_fr: "Chaque question répondue correctement restaure ton Mana (+20 Mana) et te rapproche de la victoire. En cas d'erreur, tes points de vie diminuent (-15 PV). N'hésite jamais à invoquer tes sorts (50/50, indices, potions) en cas de doute !",
+      cours_points_cles_fr: "• Règle 1 : Observer le patient avant de toucher.\n• Règle 2 : Ne jamais négliger un drapeau rouge (douleur constrictive, syncope d'effort).\n• Règle 3 : Utiliser ton Mana avec sagesse.",
+      pieges_cliniques_fr: "Le piège du débutant : se précipiter sans lire l'énoncé. Prends toujours le temps d'analyser le terrain du patient !",
+      mnemonique: "P-I-E-D : Péricardite, Infarctus (SCA), Embolie pulmonaire, Dissection aortique.",
+      carte_mentale_json: JSON.stringify({
+        id: "root",
+        label: "Initiation Sémiologique",
+        children: [
+          { id: "pv", label: "Points de Vie (100 PV) : Vigilance face aux erreurs" },
+          { id: "mana", label: "Mana (200 Max) : Carburant des sortilèges" },
+          { id: "sorts", label: "Grimoire : 50/50, Indices, Potions" },
+        ],
+      }),
+    },
+  });
+
+  await prisma.card.createMany({
+    data: [
+      {
+        lesson_id: lesson0_1.id,
+        systeme: "tutoriel",
+        niveau_difficulte: 1,
+        type_question: "QCM",
+        room_number: 1,
+        room_type: "qcm_basic",
+        question_fr: "Quel est le rôle primordial de la sémiologie médicale au lit du malade ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Recueillir les signes physiques et symptômes pour poser un diagnostic méthodique", is_correct: true },
+          { id: "B", text: "Remplacer systématiquement l'examen clinique par un scanner", is_correct: false },
+          { id: "C", text: "Prescrire des médicaments au hasard en espérant une guérison", is_correct: false },
+          { id: "D", text: "Apprendre par cœur des définitions sans jamais écouter le patient", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Exactement ! La sémiologie est le socle de toute la médecine : savoir interroger, observer, palper et ausculter avant tout examen complémentaire.",
+        reference: "[Baptiste Coustet] p.12-14",
+        tags: "initiation,sémiologie,bases",
+      },
+      {
+        lesson_id: lesson0_1.id,
+        systeme: "tutoriel",
+        niveau_difficulte: 1,
+        type_question: "VRAI_FAUX",
+        room_number: 2,
+        room_type: "standard",
+        question_fr: "VRAI ou FAUX : Lorsque tu as un doute dans un donjon, tu peux dépenser du Mana pour lancer un sort 50/50 ou consulter un indice sans perdre de PV.",
+        options_json: JSON.stringify(["VRAI", "FAUX"]),
+        reponse_correcte: "VRAI",
+        feedback_fr: "Vrai ! Ton Mana est là pour t'aider : utilise tes sorts (50/50, Indices) pour éviter de perdre des PV face aux questions pièges.",
+        reference: "[Manuel d'Aethelgard]",
+        tags: "sorts,mana,gameplay",
+      },
+      {
+        lesson_id: lesson0_1.id,
+        systeme: "tutoriel",
+        niveau_difficulte: 1,
+        type_question: "CAS_CLINIQUE",
+        room_number: 3,
+        room_type: "boss_guardian",
+        contexte_clinique: "Un homme de 58 ans ressent une vive douleur rétrosternale angoissante qui lui serre la poitrine « comme dans un étau » et irradie vers sa mâchoire depuis 30 minutes.",
+        question_fr: "Quelle est l'urgence vitale cardiovasculaire à suspecter immédiatement ?",
+        options_json: JSON.stringify([
+          { id: "A", text: "Un Syndrome Coronarien Aigu (Infarctus du myocarde)", is_correct: true },
+          { id: "B", text: "Une simple courbature musculaire bénigne", is_correct: false },
+          { id: "C", text: "Un reflux gastrique sans gravité", is_correct: false },
+          { id: "D", text: "Une crise d'angoisse isolée", is_correct: false },
+        ]),
+        reponse_correcte: "A",
+        feedback_fr: "Bravo ! Toute douleur rétrosternale constrictive prolongée irradiant à la mâchoire est un Syndrome Coronarien Aigu jusqu'à preuve du contraire (ECG 12 dérivations en urgence).",
+        reference: "[UNESS-Cardio] p.12 ; [Coustet] p.48",
+        tags: "douleur_thoracique,angor,urgence",
+      },
+    ],
   });
 
   // ==========================================

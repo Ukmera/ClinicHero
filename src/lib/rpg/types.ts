@@ -1,4 +1,12 @@
-export type CharacterClassId = "clerc" | "alchimiste" | "mage_ecg" | "moine";
+export type CharacterClassId =
+  | "clerc"
+  | "alchimiste"
+  | "mage_ecg"
+  | "moine"
+  | "necromancien"
+  | "enchanteuse"
+  | "chasseur"
+  | "gardien";
 
 export type AvatarTier = "apprenti" | "initie" | "archimage";
 
@@ -16,6 +24,9 @@ export interface CharacterClassConfig {
   passiveName: string;
   passiveShort: string;
   passiveDescription: string;
+  classSpellId: string;
+  classSpellName: string;
+  classSpellDescription: string;
   weaponSignature: string;
   iconName: string;
   stats: {
@@ -39,9 +50,23 @@ export interface RpgSpell {
   id: string;
   name: string;
   manaCost: number;
+  cooldownBattles?: number;
+  isClassSpell?: boolean;
+  classId?: CharacterClassId;
   description: string;
   icon: string;
-  effectType: "eliminate_wrong" | "show_mnemonic" | "restore_heart";
+  effectType:
+    | "fifty_fifty"
+    | "hint_light"
+    | "hint_heavy"
+    | "pause_timer"
+    | "slow_timer"
+    | "restore_hp"
+    | "reveal_answer"
+    | "ignore_damage"
+    | "resurrection"
+    | "show_mnemonic"
+    | "glossary_free";
 }
 
 export interface RpgTitle {
@@ -54,7 +79,13 @@ export interface UserRpgState {
   character_class: CharacterClassId;
   avatar_id: string;
   current_title: string;
-  mana_points: number;
+  hp_current: number;
+  hp_max: number;
+  mana_current: number;
+  mana_max: number;
+  gems: number;
   unlocked_titles: string[];
   inventory: string[];
+  unlocked_spells: string[];
+  active_companion: string;
 }

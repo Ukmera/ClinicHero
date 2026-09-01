@@ -48,6 +48,15 @@ export default async function Navbar() {
               <span>{user.xp_total} XP</span>
             </div>
 
+            {/* Gemmes */}
+            <div
+              className="hidden sm:flex items-center gap-1.5 bg-slate-800 border border-slate-700 text-amber-300 px-2.5 py-1 rounded-xl text-xs font-bold shadow-xs"
+              title={`${user.gems ?? 50} Gemmes magiques`}
+            >
+              <span className="text-amber-400">💎</span>
+              <span>{user.gems ?? 50}</span>
+            </div>
+
             {/* Niveau */}
             <div
               className="hidden sm:flex items-center gap-1.5 bg-slate-800 border border-slate-700 text-emerald-300 px-2.5 py-1 rounded-xl text-xs font-bold shadow-xs"

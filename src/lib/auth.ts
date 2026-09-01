@@ -69,7 +69,11 @@ export async function getCurrentUser() {
         current_title: true,
         unlocked_titles_json: true,
         inventory_json: true,
-        mana_points: true,
+        hp_current: true,
+        hp_max: true,
+        mana_current: true,
+        mana_max: true,
+        gems: true,
         created_at: true,
       },
     });

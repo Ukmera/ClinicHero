@@ -18,6 +18,7 @@ import {
   Shield,
 } from "lucide-react";
 import PixelSprite from "./PixelSprite";
+import MentorDialogue from "./MentorDialogue";
 import { playRetroSound } from "@/lib/rpg/audio";
 import { CharacterClassId } from "@/lib/rpg/types";
 
@@ -95,9 +96,23 @@ export default function DungeonWorldMap({ modules, user }: DungeonWorldMapProps)
     return pattern[index % pattern.length];
   };
 
-  const getDungeonTheme = (modIdx: number) => {
-    switch (modIdx) {
+  const getDungeonTheme = (mod: ModuleData, modIdx: number) => {
+    if (mod.slug.includes("tuto") || modIdx === 0 && mod.slug.includes("tutoriel")) {
+      return {
+        title: "Monde 0 : Sanctuaire d'Initiation",
+        subtitle: "L'Éveil du Sémiologue avec La Grande Blouse",
+        accentColor: "from-amber-500/20 via-slate-900 to-slate-950",
+        border: "border-amber-400/40",
+        badgeColor: "bg-amber-950/80 text-amber-300 border-amber-700/60",
+        icon: Sparkles,
+      };
+    }
+
+    // Donjons Cardio
+    const cardioIdx = mod.slug.includes("tuto") ? modIdx - 1 : modIdx;
+    switch (cardioIdx) {
       case 0:
+      case 1:
         return {
           title: "Donjon I : Les Fléaux & Symptômes",
           subtitle: "Plaines Cardiovasculaires • Douleurs & Dyspnées",
@@ -106,7 +121,7 @@ export default function DungeonWorldMap({ modules, user }: DungeonWorldMapProps)
           badgeColor: "bg-rose-950/80 text-rose-300 border-rose-700/60",
           icon: Heart,
         };
-      case 1:
+      case 2:
         return {
           title: "Donjon II : La Chambre d'Auscultation",
           subtitle: "Sanctuaire Acoustique • Bruits de Korotkoff & Souffles",
@@ -115,14 +130,14 @@ export default function DungeonWorldMap({ modules, user }: DungeonWorldMapProps)
           badgeColor: "bg-emerald-950/80 text-emerald-300 border-emerald-700/60",
           icon: Stethoscope,
         };
-      case 2:
+      case 3:
       default:
         return {
           title: "Donjon III : Le Sanctuaire Suprême",
           subtitle: "Temple des 12 Dérivations • Électrocardiogramme & Urgences",
           accentColor: "from-indigo-500/20 via-slate-900 to-slate-950",
-          border: "border-amber-400/40",
-          badgeColor: "bg-amber-950/80 text-amber-300 border-amber-700/60",
+          border: "border-indigo-400/40",
+          badgeColor: "bg-indigo-950/80 text-indigo-300 border-indigo-700/60",
           icon: Activity,
         };
     }
@@ -131,7 +146,14 @@ export default function DungeonWorldMap({ modules, user }: DungeonWorldMapProps)
   let globalLessonCounter = 0;
 
   return (
-    <div className="space-y-12 relative pb-16">
+    <div className="space-y-8 relative pb-16">
+      {/* Mentor La Grande Blouse pour guider le joueur */}
+      <MentorDialogue
+        title="La Grande Blouse te salue !"
+        message="Bienvenue dans les contrées d'Aethelgard ! Pour dissiper les brumes de l'erreur médicale, chaque donjon mettra à l'épreuve ton raisonnement clinique. Surveille tes 100 PV et dépense ton Mana pour invoquer tes sorts !"
+        expression="sage"
+      />
+
       {/* En-tête de la Carte du Monde Med-RPG */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2.5">
@@ -156,7 +178,7 @@ export default function DungeonWorldMap({ modules, user }: DungeonWorldMapProps)
 
       {/* Rendu des Donjons & Îlots interconnectés */}
       {modules.map((mod, modIdx) => {
-        const theme = getDungeonTheme(modIdx);
+        const theme = getDungeonTheme(mod, modIdx);
         const Icon = theme.icon;
 
         return (
