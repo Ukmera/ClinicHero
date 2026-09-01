@@ -10,8 +10,6 @@ import {
   Shield,
   Lightbulb,
   BookOpen,
-  Volume2,
-  VolumeX,
   RotateCcw,
   CheckCircle2,
   XCircle,
@@ -23,12 +21,14 @@ import {
   Hourglass,
   Gem,
   Flame,
+  Wand2,
+  Skull,
 } from "lucide-react";
 import { playRetroSound } from "@/lib/rpg/audio";
-import { UNIVERSAL_SPELLS, CLASS_SPELLS } from "@/lib/rpg/spells";
+import { UNIVERSAL_SPELLS } from "@/lib/rpg/spells";
 import { getClassConfig } from "@/lib/rpg/classes";
 import { submitDungeonRoomAnswerAction, completeDungeonAction, useSpellAction } from "@/app/actions/game";
-import PixelSprite from "./PixelSprite";
+import PixelSprite, { SpriteCharacterType } from "./PixelSprite";
 import MentorDialogue from "./MentorDialogue";
 
 interface CardData {
@@ -60,6 +60,13 @@ interface DungeonRoomPlayerProps {
   bossAvatar?: string | null;
 }
 
+interface FloatingText {
+  id: number;
+  text: string;
+  type: "damage" | "heal" | "mana" | "shield" | "crit";
+  x: "hero" | "monster";
+}
+
 export default function DungeonRoomPlayer({
   lessonId,
   lessonTitle,
@@ -69,13 +76,25 @@ export default function DungeonRoomPlayer({
   userMana = 100,
   userGems = 50,
   isBossDungeon = false,
-  bossName = "Gardien de l'Ignorance",
+  bossName = "Spectre de l'Erreur Médicale",
   bossAvatar = "💀",
 }: DungeonRoomPlayerProps) {
   const [currentRoomIndex, setCurrentRoomIndex] = useState(0);
   const [hp, setHp] = useState(userHp);
   const [mana, setMana] = useState(userMana);
   const [gems, setGems] = useState(userGems);
+
+  // État de santé du Monstre (100% au début du donjon)
+  const totalRooms = cards.length;
+  const [monsterHp, setMonsterHp] = useState(100);
+
+  // Animations d'Arène
+  const [heroAction, setHeroAction] = useState<"idle" | "attack" | "hurt">("idle");
+  const [monsterAction, setMonsterAction] = useState<"idle" | "attack" | "hurt">("idle");
+  const [isFiringBeam, setIsFiringBeam] = useState(false);
+  const [isHealingAura, setIsHealingAura] = useState(false);
+  const [isScreenShaking, setIsScreenShaking] = useState(false);
+  const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([]);
 
   // Événements de combat
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -104,8 +123,14 @@ export default function DungeonRoomPlayer({
 
   const currentCard = cards[currentRoomIndex] || cards[0];
   const classConfig = getClassConfig(userClass);
-  const totalRooms = cards.length;
   const isLastRoom = currentRoomIndex === totalRooms - 1;
+
+  // Déterminer le type de monstre pour cette salle
+  const getMonsterSpriteType = (): SpriteCharacterType => {
+    if (isLastRoom || isBossDungeon) return "skeleton_mage";
+    const types: SpriteCharacterType[] = ["skeleton_warrior", "skeleton_rogue", "orc_shaman", "peasant"];
+    return types[currentRoomIndex % types.length];
+  };
 
   // Parser les options JSON
   let parsedOptions: any = [];
@@ -115,7 +140,7 @@ export default function DungeonRoomPlayer({
     parsedOptions = [];
   }
 
-  // Initialisation de l'ordre pour les questions de type ORDRE
+  // Initialisation par salle
   useEffect(() => {
     if (currentCard?.type_question === "ORDRE" && Array.isArray(parsedOptions)) {
       setOrderedItems([...parsedOptions]);
@@ -129,7 +154,19 @@ export default function DungeonRoomPlayer({
     setIsCorrect(null);
     setAssociationPairs({});
     setSelectedLeft(null);
+    setHeroAction("idle");
+    setMonsterAction("idle");
+    setIsFiringBeam(false);
   }, [currentRoomIndex, currentCard]);
+
+  // Ajouter un texte flottant de combat
+  const addFloatingText = (text: string, type: FloatingText["type"], x: FloatingText["x"]) => {
+    const newId = Date.now() + Math.random();
+    setFloatingTexts((prev) => [...prev, { id: newId, text, type, x }]);
+    setTimeout(() => {
+      setFloatingTexts((prev) => prev.filter((f) => f.id !== newId));
+    }, 1200);
+  };
 
   // Lancer un sort universel
   const handleCastUniversalSpell = async (spellId: string) => {
@@ -138,6 +175,7 @@ export default function DungeonRoomPlayer({
 
     if (mana < spell.manaCost) {
       playRetroSound("wrong");
+      addFloatingText("MANA INSUFFISANT !", "damage", "hero");
       return;
     }
 
@@ -151,14 +189,20 @@ export default function DungeonRoomPlayer({
         if (wrongOpts.length > 0) {
           const toEliminate = wrongOpts.slice(0, 2).map((o: any) => o.id);
           setEliminatedOptions((prev) => [...prev, ...toEliminate]);
+          addFloatingText("✨ 50/50 ACTIVÉ !", "crit", "monster");
         }
       }
     } else if (spell.effectType === "hint_light") {
       setRevealedHint(currentCard.tags || "Règle clé : Vérifie la sémiologie fondamentale au lit du patient.");
+      addFloatingText("💡 INDICE DÉVOILÉ", "shield", "hero");
     } else if (spell.effectType === "show_mnemonic") {
       setRevealedHint(currentCard.mnemonique_rappel || "Mnémonique : P-I-E-D / A-P-T-M");
+      addFloatingText("📖 MNÉMO RÉVÉLÉ", "shield", "hero");
     } else if (spell.effectType === "restore_hp") {
+      setIsHealingAura(true);
       setHp((prev) => Math.min(100, prev + 25));
+      addFloatingText("+25 PV SOIN", "heal", "hero");
+      setTimeout(() => setIsHealingAura(false), 800);
     }
   };
 
@@ -169,15 +213,21 @@ export default function DungeonRoomPlayer({
     playRetroSound("victory");
 
     if (userClass === "clerc" || userClass === "alchimiste") {
-      // Élimine une mauvaise option
       if (Array.isArray(parsedOptions)) {
         const wrongOpt = parsedOptions.find((o: any) => !o.is_correct && !eliminatedOptions.includes(o.id));
-        if (wrongOpt) setEliminatedOptions((prev) => [...prev, wrongOpt.id]);
+        if (wrongOpt) {
+          setEliminatedOptions((prev) => [...prev, wrongOpt.id]);
+          addFloatingText(`⚔️ ${classConfig.classSpellName}`, "crit", "monster");
+        }
       }
     } else if (userClass === "moine" || userClass === "gardien") {
       setDamageImmunity(true);
+      addFloatingText("🛡️ POSTURE DE FER", "shield", "hero");
     } else if (userClass === "enchanteuse") {
+      setIsHealingAura(true);
       setHp((prev) => Math.min(100, prev + 30));
+      addFloatingText("+30 PV CLARTÉ", "heal", "hero");
+      setTimeout(() => setIsHealingAura(false), 800);
     }
   };
 
@@ -209,20 +259,52 @@ export default function DungeonRoomPlayer({
     setIsAnswerSubmitted(true);
     setIsCorrect(correct);
 
-    // Calcul des dégâts et gains
-    let hpDelta = 0;
     if (correct) {
+      // 1. Animation Attaque Héros -> Dégâts Monstre
+      setHeroAction("attack");
+      setIsFiringBeam(true);
+      playRetroSound("correct");
+
+      setTimeout(() => {
+        setMonsterAction("hurt");
+        const damageToMonster = Math.ceil(100 / totalRooms);
+        setMonsterHp((prev) => Math.max(0, prev - damageToMonster));
+        addFloatingText(`-${damageToMonster}% PV`, "crit", "monster");
+        addFloatingText("+20 MANA", "mana", "hero");
+      }, 250);
+
+      setTimeout(() => {
+        setHeroAction("idle");
+        setMonsterAction("idle");
+        setIsFiringBeam(false);
+      }, 600);
+
       setCorrectRoomsCount((prev) => prev + 1);
       setMana((prev) => Math.min(200, prev + 20));
-      playRetroSound("correct");
     } else {
-      if (!damageImmunity) {
-        hpDelta = currentCard.niveau_difficulte >= 3 ? 25 : 15;
-        setHp((prev) => Math.max(0, prev - hpDelta));
-      } else {
-        setDamageImmunity(false); // Immunité consommée
-      }
+      // 2. Animation Attaque Monstre -> Dégâts Héros
+      setMonsterAction("attack");
       playRetroSound("wrong");
+
+      setTimeout(() => {
+        setHeroAction("hurt");
+        setIsScreenShaking(true);
+
+        if (!damageImmunity) {
+          const hpDelta = currentCard.niveau_difficulte >= 3 ? 25 : 15;
+          setHp((prev) => Math.max(0, prev - hpDelta));
+          addFloatingText(`-${hpDelta} PV`, "damage", "hero");
+        } else {
+          setDamageImmunity(false);
+          addFloatingText("🛡️ ABSORBÉ !", "shield", "hero");
+        }
+      }, 250);
+
+      setTimeout(() => {
+        setHeroAction("idle");
+        setMonsterAction("idle");
+        setIsScreenShaking(false);
+      }, 650);
     }
 
     setIsSubmitting(true);
@@ -236,7 +318,7 @@ export default function DungeonRoomPlayer({
       });
 
       if (res.isDead && !damageImmunity) {
-        setIsGameOver(true);
+        setTimeout(() => setIsGameOver(true), 800);
       }
     } catch (e) {
       console.error(e);
@@ -245,25 +327,23 @@ export default function DungeonRoomPlayer({
     }
   };
 
-  // Passer à la salle suivante avec animation de porte
+  // Passer à la salle suivante avec animation de porte lourde
   const handleNextRoom = async () => {
     if (isLastRoom) {
-      // Fin du donjon
       setIsSubmitting(true);
       const res = await completeDungeonAction(lessonId, correctRoomsCount + (isCorrect ? 1 : 0), totalRooms);
       setCompletionResult(res);
       setIsFinished(true);
       setIsSubmitting(false);
       playRetroSound("victory");
-      confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
+      confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
     } else {
-      // Transition de porte
       setIsDoorTransition(true);
       playRetroSound("click");
       setTimeout(() => {
         setCurrentRoomIndex((prev) => prev + 1);
         setIsDoorTransition(false);
-      }, 500);
+      }, 800);
     }
   };
 
@@ -271,14 +351,17 @@ export default function DungeonRoomPlayer({
   if (isGameOver) {
     return (
       <div className="max-w-md mx-auto min-h-[75vh] flex flex-col items-center justify-center p-6 text-center space-y-6 animate-bounce-short">
-        <div className="w-20 h-20 rounded-3xl bg-rose-950/80 border-2 border-rose-600 flex items-center justify-center text-4xl shadow-2xl shadow-rose-950/80 ring-4 ring-rose-500/20">
+        <div className="w-24 h-24 rounded-3xl bg-rose-950/90 border-3 border-rose-500 flex items-center justify-center text-5xl shadow-2xl shadow-rose-950 ring-8 ring-rose-500/20 animate-pulse">
           💀
         </div>
 
         <div className="space-y-2">
-          <h2 className="text-2xl font-black text-rose-400">Épuisement Clinique !</h2>
+          <div className="text-[10px] font-black uppercase tracking-widest text-rose-400 bg-rose-950/80 px-3 py-1 rounded-full border border-rose-800 inline-block">
+            Échec du Donjon
+          </div>
+          <h2 className="text-2xl md:text-3xl font-black text-white">Épuisement Clinique !</h2>
           <p className="text-xs md:text-sm text-slate-300 leading-relaxed">
-            Tes points de vie sont tombés à zéro face aux pièges de ce donjon. Prends une potion ou repose-toi avant de retenter ta chance.
+            Tes points de vie sont tombés à zéro face aux pièges de ce donjon. Prends une potion de réveil ou entraîne-toi au sanctuaire.
           </p>
         </div>
 
@@ -289,7 +372,7 @@ export default function DungeonRoomPlayer({
               setIsGameOver(false);
               playRetroSound("correct");
             }}
-            className="btn-rpg-gold w-full py-4 text-xs font-black uppercase tracking-wider"
+            className="btn-rpg-gold w-full py-4 text-xs font-black uppercase tracking-wider shadow-amber-500/30"
           >
             <Sparkles className="w-4 h-4" />
             <span>Boire une Potion de Réveil (100 PV)</span>
@@ -297,9 +380,9 @@ export default function DungeonRoomPlayer({
 
           <Link
             href="/"
-            className="w-full py-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-bold rounded-2xl flex items-center justify-center text-xs transition-colors"
+            className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-bold rounded-2xl flex items-center justify-center text-xs transition-colors"
           >
-            Retourner au Sanctuaire
+            Retourner aux Donjons
           </Link>
         </div>
       </div>
@@ -310,12 +393,12 @@ export default function DungeonRoomPlayer({
   if (isFinished) {
     return (
       <div className="max-w-md mx-auto min-h-[75vh] flex flex-col items-center justify-center p-6 text-center space-y-6 animate-bounce-short">
-        <div className="w-20 h-20 rounded-3xl bg-amber-500/20 border-2 border-amber-400 flex items-center justify-center text-4xl shadow-2xl shadow-amber-500/30 ring-4 ring-amber-400/20">
+        <div className="w-24 h-24 rounded-3xl bg-amber-500/20 border-3 border-amber-400 flex items-center justify-center text-5xl shadow-2xl shadow-amber-500/40 ring-8 ring-amber-400/20 animate-bounce">
           🏆
         </div>
 
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-amber-400 bg-amber-500/15 border border-amber-400/30 px-3 py-1 rounded-full">
+          <div className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-amber-400 bg-amber-500/15 border border-amber-400/30 px-3.5 py-1 rounded-full">
             <Crown className="w-3.5 h-3.5" />
             <span>Donjon Purifié</span>
           </div>
@@ -330,7 +413,7 @@ export default function DungeonRoomPlayer({
         <div className="grid grid-cols-2 gap-3 w-full bg-slate-900/90 border border-slate-800 p-4 rounded-3xl">
           <div className="flex flex-col items-center">
             <span className="text-[10px] font-black text-slate-400 uppercase">XP Gagnés</span>
-            <div className="text-lg font-black text-indigo-400 flex items-center gap-1 mt-0.5">
+            <div className="text-xl font-black text-indigo-400 flex items-center gap-1 mt-0.5">
               <Zap className="w-4 h-4 fill-indigo-400" />
               <span>+{completionResult?.xpEarned || 25} XP</span>
             </div>
@@ -338,7 +421,7 @@ export default function DungeonRoomPlayer({
 
           <div className="flex flex-col items-center">
             <span className="text-[10px] font-black text-slate-400 uppercase">Gemmes Récoltées</span>
-            <div className="text-lg font-black text-amber-400 flex items-center gap-1 mt-0.5">
+            <div className="text-xl font-black text-amber-400 flex items-center gap-1 mt-0.5">
               <Gem className="w-4 h-4 fill-amber-400" />
               <span>+{completionResult?.gemsEarned || 10}</span>
             </div>
@@ -347,7 +430,7 @@ export default function DungeonRoomPlayer({
 
         <Link
           href="/"
-          className="btn-rpg-gold w-full py-4 text-xs font-black uppercase tracking-wider"
+          className="btn-rpg-gold w-full py-4 text-xs font-black uppercase tracking-wider shadow-amber-500/30"
         >
           <Crown className="w-4 h-4" />
           <span>Continuer l&apos;Aventure</span>
@@ -357,11 +440,11 @@ export default function DungeonRoomPlayer({
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-6 relative">
-      {/* 1. BARRE SUPÉRIEURE DE COMBAT RPG (PV, MANA, GEMMES, SALLE) */}
-      <div className="bg-slate-950/90 border border-slate-800 rounded-3xl p-4 shadow-xl backdrop-blur space-y-3">
+    <div className={`max-w-2xl mx-auto px-4 py-4 space-y-5 relative ${isScreenShaking ? "animate-screen-shake" : ""}`}>
+      {/* 1. BARRE SUPÉRIEURE DE COMBAT RPG */}
+      <div className="bg-slate-950/95 border border-slate-800 rounded-3xl p-3.5 shadow-xl backdrop-blur space-y-2.5">
         <div className="flex items-center justify-between gap-3">
-          {/* Jauge de PV */}
+          {/* Jauge de PV Héros */}
           <div className="flex-1 space-y-1">
             <div className="flex items-center justify-between text-[11px] font-black">
               <span className="text-rose-400 flex items-center gap-1">
@@ -369,12 +452,12 @@ export default function DungeonRoomPlayer({
                 <span>{hp} / 100 PV</span>
               </span>
               {damageImmunity && (
-                <span className="text-[9px] font-black text-amber-400 bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-400/30">
+                <span className="text-[9px] font-black text-amber-400 bg-amber-500/20 px-1.5 py-0.2 rounded border border-amber-400/30">
                   🛡️ Bouclier
                 </span>
               )}
             </div>
-            <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-slate-800 p-0.5">
+            <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800 p-0.5">
               <div
                 className="bg-gradient-to-r from-rose-500 to-red-600 h-full rounded-full transition-all duration-300"
                 style={{ width: `${hp}%` }}
@@ -390,7 +473,7 @@ export default function DungeonRoomPlayer({
                 <span>{mana} / 200 Mana</span>
               </span>
             </div>
-            <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-slate-800 p-0.5">
+            <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800 p-0.5">
               <div
                 className="bg-gradient-to-r from-indigo-500 to-cyan-400 h-full rounded-full transition-all duration-300"
                 style={{ width: `${(mana / 200) * 100}%` }}
@@ -399,7 +482,7 @@ export default function DungeonRoomPlayer({
           </div>
 
           {/* Gemmes */}
-          <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-2xl text-xs font-black text-amber-400 shrink-0">
+          <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 px-3 py-1 rounded-2xl text-xs font-black text-amber-400 shrink-0">
             <Gem className="w-3.5 h-3.5 fill-amber-400" />
             <span>{gems}</span>
           </div>
@@ -407,34 +490,150 @@ export default function DungeonRoomPlayer({
           {/* Quitter */}
           <Link
             href="/"
-            className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white flex items-center justify-center text-xs font-bold shrink-0 transition-colors"
+            className="w-7 h-7 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white flex items-center justify-center text-xs font-bold shrink-0 transition-colors"
           >
             ✕
           </Link>
         </div>
 
-        {/* Indicateur de Salle */}
-        <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-slate-400 border-t border-slate-800/80 pt-2">
-          <span>
-            Salle {currentRoomIndex + 1} sur {totalRooms}
-          </span>
+        {/* Indicateur de Salle & Monstre */}
+        <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-slate-400 border-t border-slate-800/80 pt-1.5">
+          <span>Salle {currentRoomIndex + 1} / {totalRooms}</span>
           <span className="text-amber-400">
-            {isLastRoom ? "💀 Gardien du Donjon" : "🚪 Couloir Sémiologique"}
+            {isLastRoom ? "💀 Défi du Gardien" : "⚔️ Épreuve Clinique"}
           </span>
         </div>
       </div>
 
-      {/* 2. TRANSITION ANIMÉE DE PORTE */}
+      {/* 2. ARÈNE DE COMBAT 2D ANIMÉE (HÉROS VS MONSTRE) */}
+      <div className="relative bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 border-2 border-slate-800 rounded-3xl p-5 shadow-2xl overflow-hidden min-h-[190px] flex flex-col justify-between">
+        {/* Texture de donjon & torches */}
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-20 pixel-rendering pointer-events-none"
+          style={{ backgroundImage: "url('/pixel-crawler/tilesets/Dungeon_Tiles.png')" }}
+        />
+        <div className="absolute top-2 left-4 opacity-40 pointer-events-none">
+          <PixelSprite type="bonfire" size="xs" glow={false} className="bg-transparent border-0" />
+        </div>
+        <div className="absolute top-2 right-4 opacity-40 pointer-events-none">
+          <PixelSprite type="bonfire" size="xs" glow={false} className="bg-transparent border-0" />
+        </div>
+
+        {/* Faisceau Magique d'Attaque Héros -> Monstre */}
+        {isFiringBeam && (
+          <div className="absolute top-1/2 left-1/4 right-1/4 h-2 bg-gradient-to-r from-indigo-400 via-cyan-300 to-amber-300 rounded-full animate-magic-beam z-30 shadow-lg shadow-indigo-500" />
+        )}
+
+        {/* Aura de Soin Héros */}
+        {isHealingAura && (
+          <div className="absolute left-8 bottom-6 w-20 h-20 rounded-full bg-emerald-500/40 animate-heal-aura z-20 pointer-events-none" />
+        )}
+
+        {/* Textes Flottants de Combat */}
+        {floatingTexts.map((f) => (
+          <div
+            key={f.id}
+            className={`absolute z-40 text-xs md:text-sm font-black px-2 py-0.5 rounded-lg animate-combat-text pointer-events-none ${
+              f.x === "hero" ? "left-12 top-10" : "right-12 top-10"
+            } ${
+              f.type === "damage"
+                ? "bg-rose-950 border border-rose-600 text-rose-300 shadow-rose-900"
+                : f.type === "heal"
+                ? "bg-emerald-950 border border-emerald-600 text-emerald-300 shadow-emerald-900"
+                : f.type === "mana"
+                ? "bg-indigo-950 border border-indigo-600 text-indigo-300 shadow-indigo-900"
+                : "bg-amber-950 border border-amber-600 text-amber-300 shadow-amber-900"
+            }`}
+          >
+            {f.text}
+          </div>
+        ))}
+
+        {/* Scène de Duel (Héros à Gauche vs Monstre à Droite) */}
+        <div className="relative z-10 flex items-center justify-between px-2 md:px-6">
+          {/* CÔTÉ HÉROS */}
+          <div className="flex flex-col items-center gap-1.5">
+            <div className="text-[10px] font-black uppercase text-indigo-300 bg-slate-950/80 px-2 py-0.5 rounded-md border border-indigo-500/30">
+              {classConfig.name.split(" ")[0]} (Toi)
+            </div>
+            <div
+              className={`transition-transform duration-300 ${
+                heroAction === "attack"
+                  ? "animate-hero-attack"
+                  : heroAction === "hurt"
+                  ? "animate-hurt"
+                  : "animate-bounce-short"
+              }`}
+            >
+              <PixelSprite
+                classId={userClass}
+                size="lg"
+                animation="idle"
+                glow={true}
+              />
+            </div>
+            <div className="flex items-center gap-1 text-[10px] font-black text-rose-400">
+              <Heart className="w-3 h-3 fill-rose-400" />
+              <span>{hp} PV</span>
+            </div>
+          </div>
+
+          {/* VS ICON */}
+          <div className="w-9 h-9 rounded-full bg-slate-950/80 border border-slate-700 flex items-center justify-center text-xs font-black text-amber-400 shadow-md">
+            ⚔️
+          </div>
+
+          {/* CÔTÉ MONSTRE / GARDIEN */}
+          <div className="flex flex-col items-center gap-1.5">
+            <div className="text-[10px] font-black uppercase text-rose-300 bg-slate-950/80 px-2 py-0.5 rounded-md border border-rose-500/30">
+              {isLastRoom ? bossName : `Gardien Salle ${currentRoomIndex + 1}`}
+            </div>
+            <div
+              className={`transition-transform duration-300 ${
+                monsterAction === "attack"
+                  ? "animate-monster-attack"
+                  : monsterAction === "hurt"
+                  ? "animate-hurt"
+                  : "animate-bounce-short"
+              }`}
+            >
+              <PixelSprite
+                type={getMonsterSpriteType()}
+                size="lg"
+                animation="idle"
+                glow={true}
+              />
+            </div>
+            {/* Barre de vie du Monstre */}
+            <div className="w-16 bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800 p-0.5">
+              <div
+                className="bg-gradient-to-r from-purple-500 to-rose-600 h-full rounded-full transition-all duration-500"
+                style={{ width: `${monsterHp}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Sol en dalles de pierre */}
+        <div className="relative z-10 w-full h-2.5 bg-slate-800/80 border-t border-slate-700 rounded-full mt-2 shadow-inner" />
+      </div>
+
+      {/* 3. TRANSITION DE PORTE LOURDE ANIMÉE */}
       {isDoorTransition && (
-        <div className="absolute inset-0 z-50 bg-slate-950/95 flex flex-col items-center justify-center space-y-3 rounded-3xl animate-pulse">
-          <div className="text-5xl animate-bounce">🚪</div>
-          <div className="text-xs font-black uppercase tracking-widest text-amber-400">
-            Ouverture de la porte suivante...
+        <div className="fixed inset-0 z-50 bg-slate-950/95 flex flex-col items-center justify-center space-y-4 animate-fadeIn backdrop-blur-md">
+          <div className="text-6xl animate-bounce">🚪</div>
+          <div className="text-center space-y-1">
+            <div className="text-[10px] font-black uppercase tracking-widest text-amber-400">
+              Donjon d&apos;Aethelgard
+            </div>
+            <h3 className="text-xl font-black text-white">
+              Entrée dans la Salle {currentRoomIndex + 2}...
+            </h3>
           </div>
         </div>
       )}
 
-      {/* 3. VIGNETTE CLINIQUE OU CONTEXTE DE LA SALLE */}
+      {/* 4. VIGNETTE CLINIQUE OU CONTEXTE */}
       {currentCard.contexte_clinique && (
         <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 space-y-1.5 shadow-md">
           <div className="text-[10px] font-black uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
@@ -447,34 +646,36 @@ export default function DungeonRoomPlayer({
         </div>
       )}
 
-      {/* 4. QUESTION & OPTIONS DE LA SALLE */}
-      <div className="card-rpg space-y-5">
+      {/* 5. QUESTION & OPTIONS TACTILES 3D */}
+      <div className="card-rpg space-y-4">
         <h3 className="text-base md:text-lg font-black text-white leading-snug">
           {currentCard.question_fr}
         </h3>
 
         {/* Indice révélé via sort */}
         {revealedHint && (
-          <div className="bg-amber-500/10 border border-amber-400/30 rounded-2xl p-3 text-xs text-amber-300 flex items-center gap-2">
+          <div className="bg-amber-500/10 border border-amber-400/30 rounded-2xl p-3 text-xs text-amber-300 flex items-center gap-2 animate-bounce-short">
             <Lightbulb className="w-4 h-4 shrink-0 text-amber-400" />
             <span>{revealedHint}</span>
           </div>
         )}
 
-        {/* Rendu des Questions : QCM & CAS CLINIQUE */}
+        {/* QCM & CAS CLINIQUE */}
         {(currentCard.type_question === "QCM" || currentCard.type_question === "CAS_CLINIQUE") && (
           <div className="space-y-2.5">
-            {parsedOptions.map((opt: any) => {
+            {parsedOptions.map((opt: any, optIdx: number) => {
               const isEliminated = eliminatedOptions.includes(opt.id);
               const isSelected = selectedOption === opt.id;
+              const runeLetters = ["᚛ A", "᚜ B", "ᚠ C", "ᚢ D", "ᚦ E"];
 
               if (isEliminated) {
                 return (
                   <div
                     key={opt.id}
-                    className="p-3.5 rounded-2xl bg-slate-950/40 border border-slate-900 text-slate-600 line-through text-xs font-medium cursor-not-allowed"
+                    className="p-3.5 rounded-2xl bg-slate-950/40 border border-slate-900 text-slate-600 line-through text-xs font-medium cursor-not-allowed relative overflow-hidden"
                   >
-                    {opt.text}
+                    <div className="absolute inset-0 bg-rose-500/10 animate-laser-slash pointer-events-none" />
+                    <span>{opt.text}</span>
                   </div>
                 );
               }
@@ -487,13 +688,20 @@ export default function DungeonRoomPlayer({
                     setSelectedOption(opt.id);
                     playRetroSound("click");
                   }}
-                  className={`w-full p-4 rounded-2xl border-2 text-left font-bold text-xs md:text-sm transition-all flex items-center justify-between ${
+                  className={`w-full p-4 rounded-2xl border-2 text-left font-bold text-xs md:text-sm transition-all flex items-center justify-between transform active:scale-98 ${
                     isSelected
-                      ? "border-amber-400 bg-amber-500/10 text-white shadow-lg shadow-amber-500/10"
+                      ? "border-amber-400 bg-amber-500/15 text-white shadow-xl shadow-amber-500/15 scale-[1.01]"
                       : "border-slate-800 bg-slate-950/80 text-slate-300 hover:border-slate-700 hover:bg-slate-900"
                   }`}
                 >
-                  <span>{opt.text}</span>
+                  <div className="flex items-center gap-2.5">
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${
+                      isSelected ? "bg-amber-400 text-slate-950 border-amber-300" : "bg-slate-900 text-slate-400 border-slate-800"
+                    }`}>
+                      {runeLetters[optIdx] || opt.id}
+                    </span>
+                    <span>{opt.text}</span>
+                  </div>
                   <div
                     className={`w-5 h-5 rounded-full border flex items-center justify-center text-[10px] ${
                       isSelected
@@ -509,7 +717,7 @@ export default function DungeonRoomPlayer({
           </div>
         )}
 
-        {/* Rendu des Questions : VRAI / FAUX */}
+        {/* VRAI / FAUX */}
         {currentCard.type_question === "VRAI_FAUX" && (
           <div className="grid grid-cols-2 gap-3">
             {["VRAI", "FAUX"].map((val) => {
@@ -522,13 +730,13 @@ export default function DungeonRoomPlayer({
                     setSelectedOption(val);
                     playRetroSound("click");
                   }}
-                  className={`py-5 rounded-2xl border-2 text-center font-black text-sm transition-all ${
+                  className={`py-6 rounded-2xl border-2 text-center font-black text-base transition-all transform active:scale-98 ${
                     isSelected
-                      ? "border-amber-400 bg-amber-500/15 text-amber-300 shadow-lg"
+                      ? "border-amber-400 bg-amber-500/20 text-amber-300 shadow-xl shadow-amber-500/20 scale-[1.02]"
                       : "border-slate-800 bg-slate-950/80 text-slate-300 hover:border-slate-700 hover:bg-slate-900"
                   }`}
                 >
-                  {val}
+                  {val === "VRAI" ? "🛡️ VRAI" : "⚔️ FAUX"}
                 </button>
               );
             })}
@@ -536,58 +744,54 @@ export default function DungeonRoomPlayer({
         )}
       </div>
 
-      {/* 5. TIROIR DU GRIMOIRE DE SORTS (ACTION BAR RPG) */}
-      <div className="bg-slate-950 border border-slate-800 rounded-3xl p-3.5 space-y-3">
+      {/* 6. TIROIR DU GRIMOIRE DE SORTS (ACTION BAR) */}
+      <div className="bg-slate-950 border border-slate-800 rounded-3xl p-3.5 space-y-2.5">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" />
+            <Wand2 className="w-3.5 h-3.5" />
             <span>Grimoire des Sortilèges</span>
           </span>
-          <button
-            onClick={() => setIsSpellDrawerOpen(!isSpellDrawerOpen)}
-            className="text-[10px] font-black text-slate-400 hover:text-white uppercase"
-          >
-            {isSpellDrawerOpen ? "Masquer ▲" : "Ouvrir ▼"}
-          </button>
+          <span className="text-[10px] text-slate-400 font-bold">
+            Mana dispo : <strong className="text-indigo-300">{mana}</strong>
+          </span>
         </div>
 
-        {/* Raccourcis Rapides de Sorts */}
         <div className="grid grid-cols-3 gap-2">
           <button
             disabled={mana < 40 || isAnswerSubmitted}
             onClick={() => handleCastUniversalSpell("fifty_fifty")}
-            className="p-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-indigo-200 text-[11px] font-black flex flex-col items-center gap-1 transition-all disabled:opacity-40"
+            className="p-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-indigo-200 text-[11px] font-black flex flex-col items-center gap-1 transition-all disabled:opacity-40 hover:scale-105 active:scale-95"
           >
             <span>✨ 50/50</span>
-            <span className="text-[9px] text-indigo-400">40 Mana</span>
+            <span className="text-[9px] text-indigo-400 font-bold">40 Mana</span>
           </button>
 
           <button
             disabled={mana < 30 || isAnswerSubmitted}
             onClick={() => handleCastUniversalSpell("hint_light")}
-            className="p-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-200 text-[11px] font-black flex flex-col items-center gap-1 transition-all disabled:opacity-40"
+            className="p-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-200 text-[11px] font-black flex flex-col items-center gap-1 transition-all disabled:opacity-40 hover:scale-105 active:scale-95"
           >
             <span>💡 Indice</span>
-            <span className="text-[9px] text-amber-400">30 Mana</span>
+            <span className="text-[9px] text-amber-400 font-bold">30 Mana</span>
           </button>
 
           <button
             disabled={classSpellUsed || isAnswerSubmitted}
             onClick={handleCastClassSpell}
-            className="p-2.5 rounded-2xl bg-gradient-to-r from-rose-950 to-indigo-950 hover:brightness-125 border border-rose-700/60 text-rose-200 text-[11px] font-black flex flex-col items-center gap-1 transition-all disabled:opacity-40"
+            className="p-2.5 rounded-2xl bg-gradient-to-r from-rose-950 to-indigo-950 hover:brightness-125 border border-rose-700/60 text-rose-200 text-[11px] font-black flex flex-col items-center gap-1 transition-all disabled:opacity-40 hover:scale-105 active:scale-95"
           >
             <span>⚔️ Sort Classe</span>
-            <span className="text-[9px] text-rose-400">
+            <span className="text-[9px] text-rose-400 font-bold">
               {classSpellUsed ? "Utilisé" : "Gratuit"}
             </span>
           </button>
         </div>
       </div>
 
-      {/* 6. BANNIÈRE DE VALIDATION & EXPLICATION */}
+      {/* 7. BANNIÈRE DE VALIDATION & EXPLICATION */}
       {isAnswerSubmitted && (
         <div
-          className={`p-4 md:p-5 rounded-3xl border-2 space-y-3 animate-bounce-short ${
+          className={`p-4 md:p-5 rounded-3xl border-2 space-y-2.5 animate-bounce-short ${
             isCorrect
               ? "bg-emerald-950/90 border-emerald-500/60 text-emerald-200"
               : "bg-rose-950/90 border-rose-500/60 text-rose-200"
@@ -597,12 +801,12 @@ export default function DungeonRoomPlayer({
             {isCorrect ? (
               <>
                 <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                <span className="text-white">Réponse Exacte ! (+20 Mana)</span>
+                <span className="text-white">Frappe Critique Réussie ! (+20 Mana)</span>
               </>
             ) : (
               <>
                 <XCircle className="w-5 h-5 text-rose-400" />
-                <span className="text-white">Erreur Médicale ! (-15 PV)</span>
+                <span className="text-white">Riposte du Monstre ! (-15 PV)</span>
               </>
             )}
           </div>
@@ -612,28 +816,28 @@ export default function DungeonRoomPlayer({
           </p>
 
           <div className="text-[10px] text-slate-400 font-bold border-t border-slate-800 pt-2">
-            📚 Source : {currentCard.reference}
+            📚 Traité de référence : {currentCard.reference}
           </div>
         </div>
       )}
 
-      {/* 7. BOUTON D'ACTION PRINCIPAL */}
-      <div className="pt-2">
+      {/* 8. BOUTON D'ACTION PRINCIPAL */}
+      <div className="pt-1">
         {!isAnswerSubmitted ? (
           <button
             disabled={!selectedOption || isSubmitting}
             onClick={handleCheckAnswer}
-            className="btn-rpg-gold w-full py-4 text-xs font-black uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-rpg-gold w-full py-4 text-xs font-black uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed shadow-amber-500/30"
           >
             <Swords className="w-4 h-4" />
-            <span>Valider ma Conduite Diagnostique</span>
+            <span>Porter le Diagnostic (Attaquer)</span>
           </button>
         ) : (
           <button
             onClick={handleNextRoom}
-            className="btn-rpg-indigo w-full py-4 text-xs font-black uppercase tracking-wider"
+            className="btn-rpg-indigo w-full py-4 text-xs font-black uppercase tracking-wider shadow-indigo-500/30"
           >
-            <span>{isLastRoom ? "Réclamer le Butin du Donjon" : "Passer à la Salle Suivante"}</span>
+            <span>{isLastRoom ? "Terrasser le Gardien & Réclamer le Butin" : "Franchir la Porte Suivante"}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         )}
