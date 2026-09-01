@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import confetti from "canvas-confetti";
 import {
@@ -23,6 +23,8 @@ import {
   Flame,
   Wand2,
   Skull,
+  MessageSquare,
+  Volume2,
 } from "lucide-react";
 import { playRetroSound } from "@/lib/rpg/audio";
 import { UNIVERSAL_SPELLS } from "@/lib/rpg/spells";
@@ -106,6 +108,10 @@ export default function DungeonRoomPlayer({
   const [correctRoomsCount, setCorrectRoomsCount] = useState(0);
   const [isDoorTransition, setIsDoorTransition] = useState(false);
 
+  // Machine à écrire (Typewriter) pour les dialogues interactifs
+  const [displayedDialogue, setDisplayedDialogue] = useState("");
+  const [isTypingComplete, setIsTypingComplete] = useState(false);
+
   // Association & Ordre
   const [associationPairs, setAssociationPairs] = useState<Record<string, string>>({});
   const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
@@ -139,6 +145,36 @@ export default function DungeonRoomPlayer({
   } catch {
     parsedOptions = [];
   }
+
+  // Texte complet du dialogue (Contexte clinique + Question)
+  const fullDialogueText = currentCard.contexte_clinique
+    ? `${currentCard.contexte_clinique}\n\n❓ ${currentCard.question_fr}`
+    : currentCard.question_fr;
+
+  // Effet de machine à écrire progressive (Typewriter RPG)
+  useEffect(() => {
+    setDisplayedDialogue("");
+    setIsTypingComplete(false);
+    let charIndex = 0;
+    const text = fullDialogueText;
+
+    const timer = setInterval(() => {
+      if (charIndex < text.length) {
+        setDisplayedDialogue(text.slice(0, charIndex + 1));
+        charIndex++;
+      } else {
+        setIsTypingComplete(true);
+        clearInterval(timer);
+      }
+    }, 18); // Vitesse fluide 18ms
+
+    return () => clearInterval(timer);
+  }, [currentRoomIndex, currentCard, fullDialogueText]);
+
+  const handleSkipTyping = () => {
+    setDisplayedDialogue(fullDialogueText);
+    setIsTypingComplete(true);
+  };
 
   // Initialisation par salle
   useEffect(() => {
@@ -439,8 +475,17 @@ export default function DungeonRoomPlayer({
     );
   }
 
+  // Déterminer le locuteur et son identité
+  const isPatientSpeaking = !!currentCard.contexte_clinique;
+  const speakerName = isPatientSpeaking
+    ? "M. Robert (Patient en consultation)"
+    : isLastRoom
+    ? bossName
+    : `Gardien de la Salle ${currentRoomIndex + 1}`;
+  const speakerAvatar = isPatientSpeaking ? "🧔🩺" : isLastRoom ? "💀⚡" : "⚔️🛡️";
+
   return (
-    <div className={`max-w-2xl mx-auto px-4 py-4 space-y-5 relative ${isScreenShaking ? "animate-screen-shake" : ""}`}>
+    <div className={`max-w-2xl mx-auto px-4 py-3 space-y-4 relative ${isScreenShaking ? "animate-screen-shake" : ""}`}>
       {/* 1. BARRE SUPÉRIEURE DE COMBAT RPG */}
       <div className="bg-slate-950/95 border border-slate-800 rounded-3xl p-3.5 shadow-xl backdrop-blur space-y-2.5">
         <div className="flex items-center justify-between gap-3">
@@ -506,8 +551,7 @@ export default function DungeonRoomPlayer({
       </div>
 
       {/* 2. ARÈNE DE COMBAT 2D ANIMÉE (HÉROS VS MONSTRE) */}
-      <div className="relative bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 border-2 border-slate-800 rounded-3xl p-5 shadow-2xl overflow-hidden min-h-[190px] flex flex-col justify-between">
-        {/* Texture de donjon & torches */}
+      <div className="relative bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 border-2 border-slate-800 rounded-3xl p-4 shadow-2xl overflow-hidden min-h-[175px] flex flex-col justify-between">
         <div
           className="absolute inset-0 bg-cover bg-center opacity-20 pixel-rendering pointer-events-none"
           style={{ backgroundImage: "url('/pixel-crawler/tilesets/Dungeon_Tiles.png')" }}
@@ -526,7 +570,7 @@ export default function DungeonRoomPlayer({
 
         {/* Aura de Soin Héros */}
         {isHealingAura && (
-          <div className="absolute left-8 bottom-6 w-20 h-20 rounded-full bg-emerald-500/40 animate-heal-aura z-20 pointer-events-none" />
+          <div className="absolute left-8 bottom-4 w-20 h-20 rounded-full bg-emerald-500/40 animate-heal-aura z-20 pointer-events-none" />
         )}
 
         {/* Textes Flottants de Combat */}
@@ -534,7 +578,7 @@ export default function DungeonRoomPlayer({
           <div
             key={f.id}
             className={`absolute z-40 text-xs md:text-sm font-black px-2 py-0.5 rounded-lg animate-combat-text pointer-events-none ${
-              f.x === "hero" ? "left-12 top-10" : "right-12 top-10"
+              f.x === "hero" ? "left-12 top-8" : "right-12 top-8"
             } ${
               f.type === "damage"
                 ? "bg-rose-950 border border-rose-600 text-rose-300 shadow-rose-900"
@@ -552,8 +596,8 @@ export default function DungeonRoomPlayer({
         {/* Scène de Duel (Héros à Gauche vs Monstre à Droite) */}
         <div className="relative z-10 flex items-center justify-between px-2 md:px-6">
           {/* CÔTÉ HÉROS */}
-          <div className="flex flex-col items-center gap-1.5">
-            <div className="text-[10px] font-black uppercase text-indigo-300 bg-slate-950/80 px-2 py-0.5 rounded-md border border-indigo-500/30">
+          <div className="flex flex-col items-center gap-1">
+            <div className="text-[9px] font-black uppercase text-indigo-300 bg-slate-950/80 px-2 py-0.5 rounded-md border border-indigo-500/30">
               {classConfig.name.split(" ")[0]} (Toi)
             </div>
             <div
@@ -567,7 +611,7 @@ export default function DungeonRoomPlayer({
             >
               <PixelSprite
                 classId={userClass}
-                size="lg"
+                size="md"
                 animation="idle"
                 glow={true}
               />
@@ -579,14 +623,14 @@ export default function DungeonRoomPlayer({
           </div>
 
           {/* VS ICON */}
-          <div className="w-9 h-9 rounded-full bg-slate-950/80 border border-slate-700 flex items-center justify-center text-xs font-black text-amber-400 shadow-md">
+          <div className="w-8 h-8 rounded-full bg-slate-950/80 border border-slate-700 flex items-center justify-center text-xs font-black text-amber-400 shadow-md">
             ⚔️
           </div>
 
           {/* CÔTÉ MONSTRE / GARDIEN */}
-          <div className="flex flex-col items-center gap-1.5">
-            <div className="text-[10px] font-black uppercase text-rose-300 bg-slate-950/80 px-2 py-0.5 rounded-md border border-rose-500/30">
-              {isLastRoom ? bossName : `Gardien Salle ${currentRoomIndex + 1}`}
+          <div className="flex flex-col items-center gap-1">
+            <div className="text-[9px] font-black uppercase text-rose-300 bg-slate-950/80 px-2 py-0.5 rounded-md border border-rose-500/30">
+              {isLastRoom ? bossName : `Gardien S.${currentRoomIndex + 1}`}
             </div>
             <div
               className={`transition-transform duration-300 ${
@@ -599,13 +643,12 @@ export default function DungeonRoomPlayer({
             >
               <PixelSprite
                 type={getMonsterSpriteType()}
-                size="lg"
+                size="md"
                 animation="idle"
                 glow={true}
               />
             </div>
-            {/* Barre de vie du Monstre */}
-            <div className="w-16 bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800 p-0.5">
+            <div className="w-14 bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800 p-0.5">
               <div
                 className="bg-gradient-to-r from-purple-500 to-rose-600 h-full rounded-full transition-all duration-500"
                 style={{ width: `${monsterHp}%` }}
@@ -614,11 +657,10 @@ export default function DungeonRoomPlayer({
           </div>
         </div>
 
-        {/* Sol en dalles de pierre */}
-        <div className="relative z-10 w-full h-2.5 bg-slate-800/80 border-t border-slate-700 rounded-full mt-2 shadow-inner" />
+        <div className="relative z-10 w-full h-2 bg-slate-800/80 border-t border-slate-700 rounded-full mt-1 shadow-inner" />
       </div>
 
-      {/* 3. TRANSITION DE PORTE LOURDE ANIMÉE */}
+      {/* 3. TRANSITION DE PORTE LOURDE */}
       {isDoorTransition && (
         <div className="fixed inset-0 z-50 bg-slate-950/95 flex flex-col items-center justify-center space-y-4 animate-fadeIn backdrop-blur-md">
           <div className="text-6xl animate-bounce">🚪</div>
@@ -633,24 +675,42 @@ export default function DungeonRoomPlayer({
         </div>
       )}
 
-      {/* 4. VIGNETTE CLINIQUE OU CONTEXTE */}
-      {currentCard.contexte_clinique && (
-        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 space-y-1.5 shadow-md">
-          <div className="text-[10px] font-black uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Cas Clinique au Lit du Malade</span>
+      {/* 4. BOÎTE DE DIALOGUE RPG INTERACTIVE (VISUAL NOVEL / JRPG TYPEWRITER) */}
+      <div
+        onClick={handleSkipTyping}
+        className="relative bg-slate-950/95 border-2 border-indigo-500/40 rounded-3xl p-4 md:p-5 shadow-2xl space-y-3 cursor-pointer group hover:border-amber-400/50 transition-colors"
+      >
+        {/* En-tête du Locuteur avec Portrait */}
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-indigo-950 border border-indigo-500/40 flex items-center justify-center text-lg shadow-sm">
+              {speakerAvatar}
+            </div>
+            <div>
+              <span className="text-[9px] font-black uppercase tracking-widest text-amber-400">
+                {isPatientSpeaking ? "Interrogatoire Clinique" : "Défi du Donjon"}
+              </span>
+              <h4 className="text-xs md:text-sm font-black text-white">{speakerName}</h4>
+            </div>
           </div>
-          <p className="text-xs md:text-sm text-slate-200 leading-relaxed font-medium">
-            {currentCard.contexte_clinique}
-          </p>
-        </div>
-      )}
 
-      {/* 5. QUESTION & OPTIONS TACTILES 3D */}
-      <div className="card-rpg space-y-4">
-        <h3 className="text-base md:text-lg font-black text-white leading-snug">
-          {currentCard.question_fr}
-        </h3>
+          <span className="text-[9px] font-bold text-slate-400 group-hover:text-amber-400 transition-colors">
+            {!isTypingComplete ? "Cliquer pour passer ▶" : "Dialogue complet"}
+          </span>
+        </div>
+
+        {/* Texte du Dialogue défilant façon RPG */}
+        <div className="text-xs md:text-sm text-slate-100 font-medium leading-relaxed min-h-[55px] relative whitespace-pre-line">
+          {displayedDialogue}
+          {!isTypingComplete && (
+            <span className="inline-block w-2 h-4 bg-amber-400 ml-1 animate-pulse" />
+          )}
+          {isTypingComplete && (
+            <span className="inline-block ml-1 text-amber-400 font-black animate-bounce text-xs">
+              ▼
+            </span>
+          )}
+        </div>
 
         {/* Indice révélé via sort */}
         {revealedHint && (
@@ -659,6 +719,14 @@ export default function DungeonRoomPlayer({
             <span>{revealedHint}</span>
           </div>
         )}
+      </div>
+
+      {/* 5. RÉPLIQUES DU JOUEUR / CHOIX DE CONDUITE DIAGNOSTIQUE */}
+      <div className="space-y-2.5">
+        <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-1 flex items-center gap-1.5">
+          <MessageSquare className="w-3.5 h-3.5 text-amber-400" />
+          <span>Ta Réplique & Conduite Médicale :</span>
+        </div>
 
         {/* QCM & CAS CLINIQUE */}
         {(currentCard.type_question === "QCM" || currentCard.type_question === "CAS_CLINIQUE") && (
@@ -730,7 +798,7 @@ export default function DungeonRoomPlayer({
                     setSelectedOption(val);
                     playRetroSound("click");
                   }}
-                  className={`py-6 rounded-2xl border-2 text-center font-black text-base transition-all transform active:scale-98 ${
+                  className={`py-5 rounded-2xl border-2 text-center font-black text-sm md:text-base transition-all transform active:scale-98 ${
                     isSelected
                       ? "border-amber-400 bg-amber-500/20 text-amber-300 shadow-xl shadow-amber-500/20 scale-[1.02]"
                       : "border-slate-800 bg-slate-950/80 text-slate-300 hover:border-slate-700 hover:bg-slate-900"
@@ -744,8 +812,8 @@ export default function DungeonRoomPlayer({
         )}
       </div>
 
-      {/* 6. TIROIR DU GRIMOIRE DE SORTS (ACTION BAR) */}
-      <div className="bg-slate-950 border border-slate-800 rounded-3xl p-3.5 space-y-2.5">
+      {/* 6. TIROIR DU GRIMOIRE DE SORTS */}
+      <div className="bg-slate-950 border border-slate-800 rounded-3xl p-3.5 space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 flex items-center gap-1.5">
             <Wand2 className="w-3.5 h-3.5" />
@@ -788,7 +856,7 @@ export default function DungeonRoomPlayer({
         </div>
       </div>
 
-      {/* 7. BANNIÈRE DE VALIDATION & EXPLICATION */}
+      {/* 7. BANNIÈRE DE DÉBRIEFING CLINIQUE EN CAS DE VALIDATION */}
       {isAnswerSubmitted && (
         <div
           className={`p-4 md:p-5 rounded-3xl border-2 space-y-2.5 animate-bounce-short ${
