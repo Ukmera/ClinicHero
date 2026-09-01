@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Sparkles, MessageSquare, ChevronRight, X } from "lucide-react";
 import { playRetroSound } from "@/lib/rpg/audio";
+import GrandBlouseAvatar from "./GrandBlouseAvatar";
 
 interface MentorDialogueProps {
   title?: string;
@@ -21,17 +22,16 @@ export default function MentorDialogue({
 }: MentorDialogueProps) {
   const [isExpanded, setIsExpanded] = useState(true);
 
-  const getExpressionEmoji = () => {
+  const getAvatarEmotion = () => {
     switch (expression) {
       case "humor":
-        return "🧙‍♂️💉";
-      case "alert":
-        return "🧙‍♂️⚡";
       case "victory":
-        return "🧙‍♂️✨";
+        return "happy";
+      case "alert":
+        return "alert";
       case "sage":
       default:
-        return "🧙‍♂️🩺";
+        return "speaking";
     }
   };
 
@@ -42,26 +42,25 @@ export default function MentorDialogue({
           setIsExpanded(true);
           playRetroSound("click");
         }}
-        className="inline-flex items-center gap-2 bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-700/60 text-indigo-200 text-xs font-black px-3.5 py-1.5 rounded-2xl shadow-lg transition-all hover:scale-105"
+        className="inline-flex items-center gap-2.5 bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-700/60 text-indigo-200 text-xs font-black px-3.5 py-2 rounded-2xl shadow-lg transition-all hover:scale-105"
       >
-        <span className="text-base">{getExpressionEmoji()}</span>
+        <GrandBlouseAvatar emotion="idle" size="sm" glow={false} className="w-6 h-7" />
         <span>Conseil de La Grande Blouse</span>
       </button>
     );
   }
 
   return (
-    <div className="relative bg-gradient-to-r from-indigo-950/95 via-slate-900/95 to-purple-950/95 border-2 border-indigo-500/40 rounded-3xl p-4 md:p-5 shadow-2xl shadow-indigo-950/50 space-y-3 animate-bounce-short">
+    <div className="relative bg-gradient-to-r from-indigo-950/95 via-slate-900/95 to-purple-950/95 border-2 border-cyan-500/40 rounded-3xl p-4 md:p-5 shadow-2xl shadow-cyan-950/40 space-y-3 animate-bounce-short">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          {/* Avatar Mentor La Grande Blouse */}
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-amber-400 border border-amber-300 flex items-center justify-center text-2xl shadow-md shrink-0 ring-2 ring-indigo-400/30">
-            {getExpressionEmoji()}
-          </div>
+          {/* Avatar Animé de La Grande Blouse Flottante */}
+          <GrandBlouseAvatar emotion={getAvatarEmotion()} size="sm" glow={true} />
+
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 bg-amber-500/15 border border-amber-400/30 px-2 py-0.5 rounded-md">
-                Mentor Suprême
+              <span className="text-[10px] font-black uppercase tracking-widest text-cyan-300 bg-cyan-500/15 border border-cyan-400/30 px-2 py-0.5 rounded-md">
+                Spectre Protecteur • Mentor
               </span>
             </div>
             <h4 className="text-sm font-black text-white">{title}</h4>

@@ -19,6 +19,7 @@ import { playRetroSound } from "@/lib/rpg/audio";
 import InteractiveChestDiagram from "@/components/InteractiveChestDiagram";
 import MindmapViewer from "@/components/MindmapViewer";
 import PixelSprite from "./PixelSprite";
+import GrandBlouseAvatar from "./GrandBlouseAvatar";
 
 interface MiniOption {
   id: string;
@@ -216,24 +217,16 @@ export default function MentorClassroomStage({ lesson }: MentorClassroomStagePro
             Professeur • Mentor Suprême
           </div>
 
-          {/* Avatar Géant Animé de La Grande Blouse */}
-          <div
-            className={`w-28 h-28 rounded-3xl bg-gradient-to-tr from-indigo-950 via-slate-900 to-purple-950 border-3 border-amber-400 flex items-center justify-center text-6xl shadow-2xl ring-8 ring-amber-400/20 transition-all duration-500 ${
-              mentorEmotion === "speaking"
-                ? "animate-mentor-float"
-                : mentorEmotion === "happy"
-                ? "scale-110 rotate-3 ring-emerald-500/40"
-                : mentorEmotion === "alert"
-                ? "animate-hurt ring-rose-500/40"
-                : "animate-mentor-gesture"
-            }`}
-          >
-            {mentorEmotion === "happy" ? "🧙‍♂️✨" : mentorEmotion === "alert" ? "🧙‍♂️⚡" : "🧙‍♂️🩺"}
-          </div>
+          {/* Avatar Géant Animé de La Grande Blouse Flottante */}
+          <GrandBlouseAvatar
+            emotion={mentorEmotion}
+            size="lg"
+            glow={true}
+          />
 
-          <div className="mt-2 text-xs font-black text-white flex items-center gap-1.5">
+          <div className="mt-1 text-xs font-black text-white flex items-center gap-1.5">
             <span>La Grande Blouse</span>
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
           </div>
         </div>
 
