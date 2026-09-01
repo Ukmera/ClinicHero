@@ -22,7 +22,7 @@ import {
 import MindmapViewer from "@/components/MindmapViewer";
 import MarkdownViewer from "@/components/MarkdownViewer";
 import MascotGuide from "@/components/MascotGuide";
-import GuidedLessonFlow from "@/components/GuidedLessonFlow";
+import MentorClassroomStage from "@/components/rpg/MentorClassroomStage";
 import InteractiveChestDiagram from "@/components/InteractiveChestDiagram";
 import { setLessonPriorKnowledgeAction } from "@/app/actions/user";
 import { playRetroSound } from "@/lib/rpg/audio";
@@ -148,9 +148,9 @@ export default function LessonViewer({
         </div>
       </div>
 
-      {/* MODE 1 : Parcours Guidé Interactif */}
+      {/* MODE 1 : Parcours Guidé Interactif en Face-to-Face */}
       {viewMode === "guided" ? (
-        <GuidedLessonFlow lesson={lesson} />
+        <MentorClassroomStage lesson={lesson} />
       ) : (
         /* MODE 2 : Fiche Synthétique par Onglets */
         <div className="space-y-6">
