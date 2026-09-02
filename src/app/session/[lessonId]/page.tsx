@@ -28,6 +28,13 @@ export default async function SessionPage({ params }: SessionPageProps) {
 
   const isBoss = lesson.dungeon_type === "boss";
 
+  let inventory: string[] = [];
+  try {
+    inventory = JSON.parse(user.inventory_json || "[]");
+  } catch (e) {
+    inventory = [];
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 py-4">
       <DungeonRoomPlayer
@@ -36,8 +43,11 @@ export default async function SessionPage({ params }: SessionPageProps) {
         cards={lesson.cards as any}
         userClass={user.character_class || "clerc"}
         userHp={user.hp_current ?? 100}
+        userHpMax={user.hp_max ?? 100}
         userMana={user.mana_current ?? 100}
+        userManaMax={user.mana_max ?? 200}
         userGems={user.gems ?? 50}
+        inventory={inventory}
         isBossDungeon={isBoss}
         bossName={lesson.boss_name}
         bossAvatar={lesson.boss_avatar}

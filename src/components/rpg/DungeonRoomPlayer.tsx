@@ -55,8 +55,11 @@ interface DungeonRoomPlayerProps {
   cards: CardData[];
   userClass?: string;
   userHp?: number;
+  userHpMax?: number;
   userMana?: number;
+  userManaMax?: number;
   userGems?: number;
+  inventory?: string[];
   isBossDungeon?: boolean;
   bossName?: string | null;
   bossAvatar?: string | null;
@@ -75,16 +78,28 @@ export default function DungeonRoomPlayer({
   cards,
   userClass = "clerc",
   userHp = 100,
+  userHpMax = 100,
   userMana = 100,
+  userManaMax = 200,
   userGems = 50,
+  inventory = [],
   isBossDungeon = false,
   bossName = "Spectre de l'Erreur Médicale",
   bossAvatar = "💀",
 }: DungeonRoomPlayerProps) {
   const [currentRoomIndex, setCurrentRoomIndex] = useState(0);
-  const [hp, setHp] = useState(userHp);
-  const [mana, setMana] = useState(userMana);
+  const [hp, setHp] = useState(Math.min(userHpMax, userHp));
+  const [mana, setMana] = useState(Math.min(userManaMax, userMana));
   const [gems, setGems] = useState(userGems);
+
+  // Perks d'équipement de la Forge
+  const hasBabinski = inventory.includes("marteau_babinski");
+  const hasChefCoat = inventory.includes("blouse_chef_clinique");
+  const hasCelesteStethoscope = inventory.includes("stethoscope_celeste");
+  const hasCelesteCoat = inventory.includes("grande_blouse_celeste");
+
+  const [freeFiftyFiftyAvailable, setFreeFiftyFiftyAvailable] = useState(hasBabinski);
+  const [errorShieldAvailable, setErrorShieldAvailable] = useState(hasChefCoat);
 
   // État de santé du Monstre (100% au début du donjon)
   const totalRooms = cards.length;
@@ -209,15 +224,24 @@ export default function DungeonRoomPlayer({
     const spell = UNIVERSAL_SPELLS[spellId];
     if (!spell) return;
 
-    if (mana < spell.manaCost) {
+    const isFiftyFifty = spell.effectType === "fifty_fifty";
+    const isFree = isFiftyFifty && freeFiftyFiftyAvailable;
+    const effectiveCost = isFree ? 0 : Math.max(0, spell.manaCost - (hasCelesteStethoscope ? 5 : 0));
+
+    if (!isFree && mana < effectiveCost) {
       playRetroSound("wrong");
       addFloatingText("MANA INSUFFISANT !", "damage", "hero");
       return;
     }
 
     playRetroSound("correct");
-    setMana((prev) => Math.max(0, prev - spell.manaCost));
-    await useSpellAction(spellId, spell.manaCost);
+    if (isFree) {
+      setFreeFiftyFiftyAvailable(false);
+      addFloatingText("🔨 BABINSKI GRATUIT !", "shield", "hero");
+    } else {
+      setMana((prev) => Math.max(0, prev - effectiveCost));
+      await useSpellAction(spellId, effectiveCost);
+    }
 
     if (spell.effectType === "fifty_fifty") {
       if (Array.isArray(parsedOptions) && parsedOptions.length > 2) {
@@ -236,7 +260,7 @@ export default function DungeonRoomPlayer({
       addFloatingText("📖 MNÉMO RÉVÉLÉ", "shield", "hero");
     } else if (spell.effectType === "restore_hp") {
       setIsHealingAura(true);
-      setHp((prev) => Math.min(100, prev + 25));
+      setHp((prev) => Math.min(userHpMax, prev + 25));
       addFloatingText("+25 PV SOIN", "heal", "hero");
       setTimeout(() => setIsHealingAura(false), 800);
     }
@@ -261,7 +285,7 @@ export default function DungeonRoomPlayer({
       addFloatingText("🛡️ POSTURE DE FER", "shield", "hero");
     } else if (userClass === "enchanteuse") {
       setIsHealingAura(true);
-      setHp((prev) => Math.min(100, prev + 30));
+      setHp((prev) => Math.min(userHpMax, prev + 30));
       addFloatingText("+30 PV CLARTÉ", "heal", "hero");
       setTimeout(() => setIsHealingAura(false), 800);
     }
@@ -296,7 +320,6 @@ export default function DungeonRoomPlayer({
     setIsCorrect(correct);
 
     if (correct) {
-      // 1. Animation Attaque Héros -> Dégâts Monstre
       setHeroAction("attack");
       setIsFiringBeam(true);
       playRetroSound("correct");
@@ -316,9 +339,8 @@ export default function DungeonRoomPlayer({
       }, 600);
 
       setCorrectRoomsCount((prev) => prev + 1);
-      setMana((prev) => Math.min(200, prev + 20));
+      setMana((prev) => Math.min(userManaMax, prev + 20));
     } else {
-      // 2. Animation Attaque Monstre -> Dégâts Héros
       setMonsterAction("attack");
       playRetroSound("wrong");
 
@@ -326,7 +348,10 @@ export default function DungeonRoomPlayer({
         setHeroAction("hurt");
         setIsScreenShaking(true);
 
-        if (!damageImmunity) {
+        if (errorShieldAvailable) {
+          setErrorShieldAvailable(false);
+          addFloatingText("🛡️ BOUCLIER CHEF !", "shield", "hero");
+        } else if (!damageImmunity) {
           const hpDelta = currentCard.niveau_difficulte >= 3 ? 25 : 15;
           setHp((prev) => Math.max(0, prev - hpDelta));
           addFloatingText(`-${hpDelta} PV`, "damage", "hero");
@@ -353,7 +378,7 @@ export default function DungeonRoomPlayer({
         roomNumber: currentRoomIndex + 1,
       });
 
-      if (res.isDead && !damageImmunity) {
+      if (res.isDead && !damageImmunity && !errorShieldAvailable) {
         setTimeout(() => setIsGameOver(true), 800);
       }
     } catch (e) {
@@ -368,19 +393,34 @@ export default function DungeonRoomPlayer({
     if (isLastRoom) {
       setIsSubmitting(true);
       const res = await completeDungeonAction(lessonId, correctRoomsCount + (isCorrect ? 1 : 0), totalRooms);
+      setIsSubmitting(false);
       setCompletionResult(res);
       setIsFinished(true);
-      setIsSubmitting(false);
       playRetroSound("victory");
-      confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
-    } else {
-      setIsDoorTransition(true);
-      playRetroSound("click");
-      setTimeout(() => {
-        setCurrentRoomIndex((prev) => prev + 1);
-        setIsDoorTransition(false);
-      }, 800);
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
+      return;
     }
+
+    setIsDoorTransition(true);
+    playRetroSound("click");
+    setTimeout(() => {
+      setCurrentRoomIndex((prev) => prev + 1);
+      setSelectedOption(null);
+      setEliminatedOptions([]);
+      setRevealedHint(null);
+      setIsAnswerSubmitted(false);
+      setIsCorrect(null);
+      setDisplayedDialogue("");
+      setIsTypingComplete(false);
+      setAssociationPairs({});
+      setSelectedLeft(null);
+      setOrderedItems([]);
+      setIsDoorTransition(false);
+    }, 450);
   };
 
   // Écran Game Over (PV = 0)
@@ -404,14 +444,14 @@ export default function DungeonRoomPlayer({
         <div className="w-full space-y-3 pt-2">
           <button
             onClick={() => {
-              setHp(100);
+              setHp(userHpMax);
               setIsGameOver(false);
               playRetroSound("correct");
             }}
             className="btn-rpg-gold w-full py-4 text-xs font-black uppercase tracking-wider shadow-amber-500/30"
           >
             <Sparkles className="w-4 h-4" />
-            <span>Boire une Potion de Réveil (100 PV)</span>
+            <span>Boire une Potion de Réveil ({userHpMax} PV)</span>
           </button>
 
           <Link
@@ -494,18 +534,22 @@ export default function DungeonRoomPlayer({
             <div className="flex items-center justify-between text-[11px] font-black">
               <span className="text-rose-400 flex items-center gap-1">
                 <Heart className="w-3.5 h-3.5 fill-rose-400" />
-                <span>{hp} / 100 PV</span>
+                <span>{hp} / {userHpMax} PV</span>
               </span>
-              {damageImmunity && (
-                <span className="text-[9px] font-black text-amber-400 bg-amber-500/20 px-1.5 py-0.2 rounded border border-amber-400/30">
-                  🛡️ Bouclier
+              {errorShieldAvailable ? (
+                <span className="text-[9px] font-black text-emerald-300 bg-emerald-950/80 px-1.5 py-0.2 rounded border border-emerald-600/40">
+                  🛡️ Bouclier Chef
                 </span>
-              )}
+              ) : damageImmunity ? (
+                <span className="text-[9px] font-black text-amber-400 bg-amber-500/20 px-1.5 py-0.2 rounded border border-amber-400/30">
+                  🛡️ Posture
+                </span>
+              ) : null}
             </div>
             <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800 p-0.5">
               <div
                 className="bg-gradient-to-r from-rose-500 to-red-600 h-full rounded-full transition-all duration-300"
-                style={{ width: `${hp}%` }}
+                style={{ width: `${Math.min(100, (hp / userHpMax) * 100)}%` }}
               />
             </div>
           </div>
@@ -515,13 +559,18 @@ export default function DungeonRoomPlayer({
             <div className="flex items-center justify-between text-[11px] font-black">
               <span className="text-indigo-300 flex items-center gap-1">
                 <Zap className="w-3.5 h-3.5 fill-indigo-400" />
-                <span>{mana} / 200 Mana</span>
+                <span>{mana} / {userManaMax} Mana</span>
               </span>
+              {freeFiftyFiftyAvailable && (
+                <span className="text-[9px] font-black text-cyan-300 bg-cyan-950/80 px-1.5 py-0.2 rounded border border-cyan-600/40">
+                  🔨 50/50 Gratuit
+                </span>
+              )}
             </div>
             <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800 p-0.5">
               <div
                 className="bg-gradient-to-r from-indigo-500 to-cyan-400 h-full rounded-full transition-all duration-300"
-                style={{ width: `${(mana / 200) * 100}%` }}
+                style={{ width: `${Math.min(100, (mana / userManaMax) * 100)}%` }}
               />
             </div>
           </div>

@@ -48,14 +48,15 @@ export default async function Navbar() {
               <span>{user.xp_total} XP</span>
             </div>
 
-            {/* Gemmes */}
-            <div
-              className="hidden sm:flex items-center gap-1.5 bg-slate-800 border border-slate-700 text-amber-300 px-2.5 py-1 rounded-xl text-xs font-bold shadow-xs"
-              title={`${user.gems ?? 50} Gemmes magiques`}
+            {/* Gemmes (Lien direct vers la Forge / Shop) */}
+            <Link
+              href="/shop"
+              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-amber-400 text-amber-300 px-2.5 py-1 rounded-xl text-xs font-bold shadow-xs transition-transform hover:scale-105"
+              title="La Forge d'Équipements (Boutique de Gemmes)"
             >
               <span className="text-amber-400">💎</span>
               <span>{user.gems ?? 50}</span>
-            </div>
+            </Link>
 
             {/* Niveau */}
             <div
@@ -65,6 +66,15 @@ export default async function Navbar() {
               <Shield className="w-4 h-4 text-emerald-400 fill-emerald-400" />
               <span>Niv. {user.user_level}</span>
             </div>
+
+            {/* Forge & Boutique */}
+            <Link
+              href="/shop"
+              className="flex items-center gap-1 bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-slate-950 px-2.5 py-1 rounded-xl text-xs font-black shadow-xs transition-transform hover:scale-105"
+              title="La Forge d'Équipements & Boutique"
+            >
+              <span>🔨 Forge</span>
+            </Link>
 
             {/* Atelier Pratique */}
             <Link

@@ -54,6 +54,13 @@ export default async function ReviewPage() {
     );
   }
 
+  let inventory: string[] = [];
+  try {
+    inventory = JSON.parse(user.inventory_json || "[]");
+  } catch (e) {
+    inventory = [];
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 py-4">
       <DungeonRoomPlayer
@@ -62,8 +69,11 @@ export default async function ReviewPage() {
         cards={dueCards as any}
         userClass={user.character_class || "clerc"}
         userHp={user.hp_current ?? 100}
+        userHpMax={user.hp_max ?? 100}
         userMana={user.mana_current ?? 100}
+        userManaMax={user.mana_max ?? 200}
         userGems={user.gems ?? 50}
+        inventory={inventory}
         isBossDungeon={true}
         bossName="Spectre de l'Oubli Clinique"
         bossAvatar="👻"
