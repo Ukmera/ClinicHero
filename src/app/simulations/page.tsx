@@ -15,10 +15,11 @@ import {
 } from "lucide-react";
 import BloodPressureSimulator from "@/components/BloodPressureSimulator";
 import HeartSoundSimulator from "@/components/HeartSoundSimulator";
+import VirtualPatientSimulator from "@/components/VirtualPatientSimulator";
 import { playRetroSound } from "@/lib/rpg/audio";
 
 export default function SimulationsPage() {
-  const [activeTab, setActiveTab] = useState<"tension" | "auscultation">("tension");
+  const [activeTab, setActiveTab] = useState<"consultation" | "tension" | "auscultation">("consultation");
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
@@ -48,16 +49,44 @@ export default function SimulationsPage() {
             <span>Forge & Laboratoire Clinique Virtuel</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
-            Atelier des Gestes Sémiologiques
+            Atelier des Gestes & Consultations
           </h1>
           <p className="text-slate-300 text-xs md:text-sm max-w-xl leading-relaxed">
-            Entraîne-toi aux gestes cardiovasculaires en temps réel avec des mascottes interactives et des moteurs de synthèse acoustique Web Audio.
+            Interrogez des patients virtuels, menez l&apos;anamnèse sémiologique (P-A-R-A-S-I-T-E) et entraînez-vous aux gestes en temps réel.
           </p>
         </div>
       </div>
 
-      {/* Sélecteur des Simulateurs (2 Boutons RPG Tactiles 3D) */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Sélecteur des Simulateurs (3 Boutons RPG Tactiles 3D) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <button
+          onClick={() => {
+            setActiveTab("consultation");
+            playRetroSound("click");
+          }}
+          className={`p-4 rounded-2xl border-2 text-left transition-all flex items-center gap-3.5 ${
+            activeTab === "consultation"
+              ? "border-amber-400 bg-slate-900 shadow-lg shadow-amber-500/10 scale-[1.01]"
+              : "border-slate-800 bg-slate-950/80 hover:border-slate-700 hover:bg-slate-900"
+          }`}
+        >
+          <div
+            className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 border ${
+              activeTab === "consultation"
+                ? "bg-amber-400 text-slate-950 border-amber-300 shadow-sm"
+                : "bg-slate-900 text-slate-400 border-slate-800"
+            }`}
+          >
+            👨‍⚕️
+          </div>
+          <div>
+            <div className={`font-black text-sm ${activeTab === "consultation" ? "text-amber-400" : "text-white"}`}>
+              Patient Virtuel
+            </div>
+            <div className="text-[11px] text-slate-400 font-medium">Anamnèse & Diagnostic</div>
+          </div>
+        </button>
+
         <button
           onClick={() => {
             setActiveTab("tension");
@@ -82,7 +111,7 @@ export default function SimulationsPage() {
             <div className={`font-black text-sm ${activeTab === "tension" ? "text-amber-400" : "text-white"}`}>
               Prise de Pression
             </div>
-            <div className="text-[11px] text-slate-400 font-medium">Bruits de Korotkoff & Sphygmo</div>
+            <div className="text-[11px] text-slate-400 font-medium">Bruits de Korotkoff</div>
           </div>
         </button>
 
@@ -110,14 +139,20 @@ export default function SimulationsPage() {
             <div className={`font-black text-sm ${activeTab === "auscultation" ? "text-emerald-400" : "text-white"}`}>
               Stéthoscope Virtuel
             </div>
-            <div className="text-[11px] text-slate-400 font-medium">Foyers & Souffles Cardiaques</div>
+            <div className="text-[11px] text-slate-400 font-medium">Foyers & Souffles</div>
           </div>
         </button>
       </div>
 
       {/* Rendu du Simulateur Actif */}
       <div className="pt-2">
-        {activeTab === "tension" ? <BloodPressureSimulator /> : <HeartSoundSimulator />}
+        {activeTab === "consultation" ? (
+          <VirtualPatientSimulator />
+        ) : activeTab === "tension" ? (
+          <BloodPressureSimulator />
+        ) : (
+          <HeartSoundSimulator />
+        )}
       </div>
     </div>
   );
